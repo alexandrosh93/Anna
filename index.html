@@ -209,10 +209,28 @@
     .card .sub   { font-size: .78rem; color: var(--muted); margin-top: 4px; }
     .card.income .value { color: var(--green); }
     .card.spent  .value { color: var(--orange); }
+    .card.left .value   { color: var(--green); }
     .card.left.negative .value { color: var(--red); }
     .progress-wrap { margin-top: 12px; }
     .progress-bar  { height: 6px; border-radius: 99px; background: var(--surface2); overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 99px; transition: width .4s; }
+    /* Balance hero card */
+    .card.balance-hero {
+      background: linear-gradient(135deg, #4338ca, #7c3aed);
+      border-color: transparent;
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+      padding: 22px 26px;
+    }
+    .card.balance-hero .label { color: rgba(255,255,255,.7); }
+    .card.balance-hero .value { color: #fff; font-size: 2rem; }
+    .card.balance-hero .sub   { color: rgba(255,255,255,.55); }
+    .hero-right { display: flex; gap: 28px; }
+    .hero-stat { display: flex; flex-direction: column; align-items: flex-end; }
+    .hero-stat .hs-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.6); margin-bottom: 3px; }
+    .hero-stat .hs-val   { font-size: 1.05rem; font-weight: 700; color: #fff; }
+    .hero-stat .hs-val.green { color: #86efac; }
+    .hero-stat .hs-val.red   { color: #fca5a5; }
 
     /* ── Main grid (monthly tab) ── */
     .main-grid { display: grid; grid-template-columns: 1fr 330px; gap: 24px; align-items: start; }
@@ -233,15 +251,18 @@
     .btn-danger { background: transparent; color: var(--red); border: 1px solid transparent; font-size: .78rem; padding: 4px 7px; }
     .btn-danger:hover { border-color: var(--red); background: rgba(239,68,68,.07); }
 
-    .category-block { margin-bottom: 14px; }
-    .category-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 5px 4px; border-bottom: 1px solid var(--border); margin-bottom: 6px; display: flex; justify-content: space-between; }
-    .category-total { color: var(--text); font-weight: 600; }
+    .category-block { margin-bottom: 18px; }
+    .category-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 4px 2px 6px; border-bottom: 1px solid var(--border); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .category-total { color: var(--text); font-weight: 700; font-size: .78rem; }
 
-    .expense-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; transition: background .12s; }
+    .expense-row { display: grid; grid-template-columns: 40px 1fr auto auto; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 10px; transition: background .12s; }
     .expense-row:hover { background: var(--surface2); }
-    .expense-name   { font-size: .88rem; }
+    .cat-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .expense-info { min-width: 0; }
+    .expense-name   { font-size: .88rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .expense-cat-tag { font-size: .68rem; color: var(--muted); margin-top: 1px; }
     .expense-note   { font-size: .7rem; color: var(--muted); }
-    .expense-amount { font-weight: 600; font-size: .88rem; text-align: right; white-space: nowrap; }
+    .expense-amount { font-weight: 700; font-size: .88rem; text-align: right; white-space: nowrap; color: var(--red); }
 
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 44px 20px; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--muted); gap: 10px; }
     .empty-state .ei { font-size: 2.2rem; }
@@ -365,6 +386,20 @@ const sb = createClient(
 /* ── Constants ── */
 const COLORS = ['#6c63ff','#a78bfa','#22c55e','#eab308','#f97316','#ef4444','#06b6d4','#ec4899','#84cc16','#f59e0b'];
 const CATEGORIES = ['Housing','Utilities','Insurance','Health','Personal Care','Groceries','Leisure','Installments','Transport','Other'];
+const CAT_META = {
+  'Housing':       { icon: '🏠', bg: '#6c63ff' },
+  'Utilities':     { icon: '⚡', bg: '#eab308' },
+  'Insurance':     { icon: '🛡️', bg: '#22c55e' },
+  'Health':        { icon: '❤️', bg: '#ef4444' },
+  'Personal Care': { icon: '🪥', bg: '#ec4899' },
+  'Groceries':     { icon: '🛒', bg: '#f97316' },
+  'Leisure':       { icon: '🎬', bg: '#06b6d4' },
+  'Installments':  { icon: '💳', bg: '#a78bfa' },
+  'Transport':     { icon: '🚗', bg: '#3b82f6' },
+  'Other':         { icon: '📦', bg: '#64748b' },
+  'Loans':         { icon: '🏦', bg: '#f43f5e' },
+};
+function catMeta(cat) { return CAT_META[cat] || { icon: '📌', bg: '#64748b' }; }
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -540,25 +575,28 @@ function renderMonthly() {
     </div>
 
     <div class="summary-grid">
-      <div class="card income">
-        <div class="label">Net Salary</div>
-        <div class="salary-row" id="editSalaryBtn">
-          <div class="value">${fmt(state.salary)}</div>
-          <span class="edit-icon">✏️</span>
+      <div class="card balance-hero">
+        <div>
+          <div class="label">Balance</div>
+          <div class="value">${fmt(left)}</div>
+          <div class="sub">${state.salary > 0 ? pct + '% of salary spent' : 'Set salary to see %'}</div>
+          <div class="progress-wrap" style="width:200px;max-width:100%;margin-top:10px">
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+          </div>
         </div>
-        <div class="sub">${state.salary === 0 ? 'Click to set salary' : 'Monthly take-home'}</div>
-      </div>
-      <div class="card spent">
-        <div class="label">Expenses</div>
-        <div class="value">${fmt(grandTotal)}</div>
-        <div class="sub">${loans > 0 ? `incl. ${fmt(loans)} loans` : 'this month'}</div>
-      </div>
-      <div class="card left ${left < 0 ? 'negative' : ''}">
-        <div class="label">Remaining</div>
-        <div class="value">${fmt(left)}</div>
-        <div class="sub">${state.salary > 0 ? pct + '% of salary spent' : 'Set salary to see %'}</div>
-        <div class="progress-wrap">
-          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+        <div class="hero-right">
+          <div class="hero-stat">
+            <span class="hs-label">Income</span>
+            <span class="hs-val green salary-row" id="editSalaryBtn" style="cursor:pointer;display:flex;align-items:center;gap:4px">
+              ${fmt(state.salary)}<span class="edit-icon" style="opacity:.7;font-size:.7rem">✏️</span>
+            </span>
+            <span style="font-size:.65rem;color:rgba(255,255,255,.45)">${state.salary === 0 ? 'tap to set' : 'monthly'}</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hs-label">Spent</span>
+            <span class="hs-val red">${fmt(grandTotal)}</span>
+            <span style="font-size:.65rem;color:rgba(255,255,255,.45)">${loans > 0 ? `incl. ${fmt(loans)} loans` : 'this month'}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -582,32 +620,50 @@ function renderMonthly() {
 
         ${Object.entries(catMap).map(([cat, items]) => {
           const catTotal = items.reduce((s, i) => s + Number(i.amount), 0);
+          const cm = catMeta(cat);
           return `
           <div class="category-block">
-            <div class="category-title"><span>${cat}</span><span class="category-total">${fmt(catTotal)}</span></div>
-            ${items.map(e => `
+            <div class="category-title">
+              <span style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;border-radius:50%;background:${cm.bg};display:inline-block"></span>
+                ${cat}
+              </span>
+              <span class="category-total">${fmt(catTotal)}</span>
+            </div>
+            ${items.map(e => {
+              const cm2 = catMeta(e.category);
+              return `
             <div class="expense-row">
-              <div>
+              <div class="cat-icon" style="background:${cm2.bg}22;font-size:1.15rem">${cm2.icon}</div>
+              <div class="expense-info">
                 <div class="expense-name">${e.name}</div>
                 ${e.note ? `<div class="expense-note">${e.note}</div>` : ''}
               </div>
-              <div class="expense-amount">${fmt(e.amount)}</div>
+              <div class="expense-amount">−${fmt(e.amount)}</div>
               <div style="display:flex;gap:4px">
                 <button class="btn btn-ghost btn-sm" data-edit="${e.id}">Edit</button>
                 <button class="btn btn-danger" data-delete="${e.id}">✕</button>
               </div>
-            </div>`).join('')}
+            </div>`;
+            }).join('')}
           </div>`;
         }).join('')}
 
         <!-- Loans -->
         <div class="category-block" style="margin-top:8px">
           ${hasLoans ? `
-          <div class="category-title"><span>Loans (recurring)</span><span class="category-total">${fmt(loans)}</span></div>
+          <div class="category-title">
+            <span style="display:flex;align-items:center;gap:6px">
+              <span style="width:8px;height:8px;border-radius:50%;background:#f43f5e;display:inline-block"></span>
+              Loans (recurring)
+            </span>
+            <span class="category-total">${fmt(loans)}</span>
+          </div>
           ${state.loans.map(l => `
           <div class="expense-row">
-            <div><div class="expense-name">${l.name}</div></div>
-            <div class="expense-amount">${fmt(l.monthly)}</div>
+            <div class="cat-icon" style="background:#f43f5e22">🏦</div>
+            <div class="expense-info"><div class="expense-name">${l.name}</div></div>
+            <div class="expense-amount">−${fmt(l.monthly)}</div>
             <div style="display:flex;gap:4px">
               <button class="btn btn-ghost btn-sm" data-edit-loan="${l.id}">Edit</button>
               <button class="btn btn-danger" data-delete-loan="${l.id}">✕</button>
