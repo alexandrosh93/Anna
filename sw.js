@@ -1,4 +1,4 @@
-const CACHE = 'anna-v1';
+const CACHE = 'anna-v2';
 const SHELL = ['./', './index.html', './icon.svg', './manifest.json'];
 
 self.addEventListener('install', e => {
