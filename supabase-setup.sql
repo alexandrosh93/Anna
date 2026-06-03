@@ -1,21 +1,21 @@
--- Anna Expense Tracker — Supabase Setup (v2)
--- Safe to run on existing project: only touches anna_ prefixed tables
+-- Anna Expense Tracker — Supabase Setup (v3)
+-- Safe: only touches anna_ prefixed tables
 -- Run in: Database → SQL Editor → New query
 
--- Drop old anna_ tables cleanly
 drop table if exists anna_monthly_overrides cascade;
 drop table if exists anna_expenses          cascade;
 drop table if exists anna_loans             cascade;
 drop table if exists anna_settings          cascade;
 
--- ── Settings ──
+-- ── Settings per month ──
 create table anna_settings (
-  id         int     primary key default 1,
-  salary     numeric not null default 0,
-  updated_at timestamptz default now()
+  year   int     not null,
+  month  int     not null,
+  salary numeric not null default 0,
+  primary key (year, month)
 );
 
--- ── Expenses (month-specific) ──
+-- ── Expenses per month ──
 create table anna_expenses (
   id         serial  primary key,
   name       text    not null,
@@ -26,16 +26,18 @@ create table anna_expenses (
   month      int     not null,
   created_at timestamptz      default now()
 );
-
 create index on anna_expenses (year, month);
 
--- ── Loans (recurring every month) ──
+-- ── Loans per month ──
 create table anna_loans (
-  id         text    primary key,
+  id         serial  primary key,
   name       text    not null,
   monthly    numeric not null default 0,
+  year       int     not null,
+  month      int     not null,
   created_at timestamptz default now()
 );
+create index on anna_loans (year, month);
 
 -- ── Row Level Security ──
 alter table anna_settings enable row level security;
@@ -45,6 +47,3 @@ alter table anna_loans     enable row level security;
 create policy "anon_all" on anna_settings for all to anon using (true) with check (true);
 create policy "anon_all" on anna_expenses  for all to anon using (true) with check (true);
 create policy "anon_all" on anna_loans     for all to anon using (true) with check (true);
-
--- ── Default salary row ──
-insert into anna_settings (id, salary) values (1, 0);

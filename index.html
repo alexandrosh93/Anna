@@ -317,6 +317,38 @@
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--surface); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* ── Lock screen ── */
+    #lock-screen {
+      position: fixed; inset: 0; z-index: 999;
+      background: #0f1117;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0;
+    }
+    .lock-icon {
+      width: 80px; height: 80px; border-radius: 20px;
+      background: linear-gradient(135deg, #3730a3, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; margin-bottom: 14px;
+      box-shadow: 0 8px 32px rgba(108,99,255,.4);
+    }
+    .lock-title { font-size: 1.5rem; font-weight: 800; color: #e2e8f0; letter-spacing: 3px; margin-bottom: 6px; }
+    .lock-sub   { font-size: .82rem; color: #94a3b8; margin-bottom: 32px; }
+    .pin-dots   { display: flex; gap: 14px; margin-bottom: 12px; }
+    .pin-dot    { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #2e3250; background: transparent; transition: all .15s; }
+    .pin-dot.filled { background: #6c63ff; border-color: #6c63ff; }
+    .pin-error  { height: 20px; font-size: .78rem; color: #ef4444; margin-bottom: 16px; text-align: center; }
+    .keypad     { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px; }
+    .key-btn    {
+      width: 72px; height: 72px; border-radius: 50%;
+      border: 1px solid #2e3250; background: #1a1d27;
+      color: #e2e8f0; font-size: 1.4rem; font-weight: 600;
+      cursor: pointer; transition: background .12s, transform .08s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .key-btn:active { background: #6c63ff; transform: scale(.93); }
+    .key-btn.empty  { background: transparent; border: none; cursor: default; }
+    .key-btn.del    { font-size: 1.1rem; }
   </style>
 </head>
 <body>
@@ -391,8 +423,8 @@ async function withSync(fn) {
 async function fetchMonth(year, month) {
   const [expRes, settRes, loanRes] = await Promise.all([
     sb.from('anna_expenses').select('*').eq('year', year).eq('month', month).order('id'),
-    sb.from('anna_settings').select('*').eq('id', 1).single(),
-    sb.from('anna_loans').select('*').order('id'),
+    sb.from('anna_settings').select('salary').eq('year', year).eq('month', month).maybeSingle(),
+    sb.from('anna_loans').select('*').eq('year', year).eq('month', month).order('id'),
   ]);
   if (expRes.error) throw expRes.error;
   return {
@@ -403,14 +435,18 @@ async function fetchMonth(year, month) {
 }
 
 async function fetchYearData(year) {
-  const { data, error } = await sb
-    .from('anna_expenses')
-    .select('month, amount')
-    .eq('year', year);
-  if (error) throw error;
-  const totals = Array(12).fill(0);
-  (data || []).forEach(e => { totals[e.month] += Number(e.amount); });
-  return totals;
+  const [expRes, loanRes, settRes] = await Promise.all([
+    sb.from('anna_expenses').select('month, amount').eq('year', year),
+    sb.from('anna_loans').select('month, monthly').eq('year', year),
+    sb.from('anna_settings').select('month, salary').eq('year', year),
+  ]);
+  const expTotals  = Array(12).fill(0);
+  const loanTotals = Array(12).fill(0);
+  const salaries   = Array(12).fill(0);
+  (expRes.data  || []).forEach(e => { expTotals[e.month]  += Number(e.amount); });
+  (loanRes.data || []).forEach(l => { loanTotals[l.month] += Number(l.monthly); });
+  (settRes.data || []).forEach(s => { salaries[s.month]    = Number(s.salary); });
+  return { expTotals, loanTotals, salaries };
 }
 
 /* ── Copy from previous month ── */
@@ -419,16 +455,35 @@ async function copyFromPrevious() {
   if (pMonth < 0) { pMonth = 11; pYear--; }
   setSyncStatus('syncing');
   try {
-    const { data, error } = await sb
-      .from('anna_expenses').select('*').eq('year', pYear).eq('month', pMonth);
-    if (error) throw error;
-    if (!data?.length) { showToast(`No expenses in ${MONTHS[pMonth]}`, '#f97316'); setSyncStatus('synced'); return; }
-    const rows = data.map(({ id, created_at, ...rest }) => ({ ...rest, year: state.currentYear, month: state.currentMonth }));
-    const { data: inserted, error: err2 } = await sb.from('anna_expenses').insert(rows).select();
-    if (err2) throw err2;
-    state.expenses = [...state.expenses, ...inserted];
+    const [expRes, loanRes, settRes] = await Promise.all([
+      sb.from('anna_expenses').select('*').eq('year', pYear).eq('month', pMonth),
+      sb.from('anna_loans').select('*').eq('year', pYear).eq('month', pMonth),
+      sb.from('anna_settings').select('salary').eq('year', pYear).eq('month', pMonth).maybeSingle(),
+    ]);
+    const Y = state.currentYear, M = state.currentMonth;
+    let count = 0;
+
+    if (expRes.data?.length) {
+      const rows = expRes.data.map(({ id, created_at, ...r }) => ({ ...r, year: Y, month: M }));
+      const { data: ins } = await sb.from('anna_expenses').insert(rows).select();
+      if (ins) { state.expenses = [...state.expenses, ...ins]; count += ins.length; }
+    }
+    if (loanRes.data?.length) {
+      const rows = loanRes.data.map(({ id, created_at, ...r }) => ({ ...r, year: Y, month: M }));
+      const { data: ins } = await sb.from('anna_loans').insert(rows).select();
+      if (ins) { state.loans = [...state.loans, ...ins]; count += ins.length; }
+    }
+    if (settRes.data?.salary) {
+      state.salary = Number(settRes.data.salary);
+      await sb.from('anna_settings').upsert({ year: Y, month: M, salary: state.salary });
+    }
+
+    if (count === 0 && !settRes.data?.salary) {
+      showToast(`Nothing to copy from ${MONTHS[pMonth]}`, '#f97316');
+    } else {
+      showToast(`Copied from ${MONTHS[pMonth]}`);
+    }
     saveLocal(); render();
-    showToast(`Copied ${inserted.length} expenses from ${MONTHS[pMonth]}`);
     setSyncStatus('synced');
   } catch(e) { console.error(e); setSyncStatus('error'); showToast('Copy failed', '#ef4444'); }
 }
@@ -597,16 +652,17 @@ function renderMonthly() {
 
 /* ── Year view ── */
 function renderYear() {
-  const loans      = loanSum();
-  const monthTotals = state.yearData || Array(12).fill(0);
-  const maxBar     = Math.max(...monthTotals.map(t => t + loans), state.salary || 1, 1);
-  const yearTotal  = monthTotals.reduce((s, t) => s + t, 0);
-  const yearLoans  = loans * 12;
-  const yearGrand  = yearTotal + yearLoans;
-  const yearLeft   = (state.salary * 12) - yearGrand;
-
+  const yd         = state.yearData || { expTotals: Array(12).fill(0), loanTotals: Array(12).fill(0), salaries: Array(12).fill(0) };
   const thisYear   = today.getFullYear();
   const thisMon    = today.getMonth();
+
+  const yearSalary = yd.salaries.reduce((s, v) => s + v, 0);
+  const yearExp    = yd.expTotals.reduce((s, v) => s + v, 0);
+  const yearLoans  = yd.loanTotals.reduce((s, v) => s + v, 0);
+  const yearGrand  = yearExp + yearLoans;
+  const yearLeft   = yearSalary - yearGrand;
+
+  const maxBar = Math.max(...Array.from({length:12}, (_,i) => yd.expTotals[i] + yd.loanTotals[i]), 1);
 
   return `
   <div class="app">
@@ -621,12 +677,11 @@ function renderYear() {
       </div>
     </div>
 
-    <!-- Year summary cards -->
     <div class="summary-grid" style="margin-bottom:28px">
       <div class="card income">
-        <div class="label">Annual Salary</div>
-        <div class="value">${fmt(state.salary * 12)}</div>
-        <div class="sub">${fmt(state.salary)} / month</div>
+        <div class="label">Annual Income</div>
+        <div class="value">${fmt(yearSalary)}</div>
+        <div class="sub">sum of all monthly salaries</div>
       </div>
       <div class="card spent">
         <div class="label">Year Expenses</div>
@@ -640,17 +695,16 @@ function renderYear() {
       </div>
     </div>
 
-    <!-- Bar chart + table side by side -->
     <div class="year-grid">
       <div class="year-card">
         <h2>Monthly Expenses</h2>
         <div class="bar-chart">
           ${MONTHS_SHORT.map((name, i) => {
-            const total    = monthTotals[i] + loans;
-            const barPct   = Math.min(100, (total / maxBar) * 100);
-            const isCur    = i === thisMon && state.currentYear === thisYear;
-            const remaining = state.salary - total;
-            const color    = remaining < 0 ? 'var(--red)' : isCur ? 'var(--accent2)' : 'var(--accent)';
+            const total     = yd.expTotals[i] + yd.loanTotals[i];
+            const barPct    = Math.min(100, (total / maxBar) * 100);
+            const isCur     = i === thisMon && state.currentYear === thisYear;
+            const remaining = yd.salaries[i] - total;
+            const color     = remaining < 0 ? 'var(--red)' : isCur ? 'var(--accent2)' : 'var(--accent)';
             return `
             <div class="bar-row">
               <div class="month-lbl ${isCur ? 'cur' : ''}" data-goto-month="${i}">${name}</div>
@@ -665,8 +719,8 @@ function renderYear() {
         <h2>Remaining by Month</h2>
         <div class="bar-chart">
           ${MONTHS_SHORT.map((name, i) => {
-            const remaining = state.salary - monthTotals[i] - loans;
-            const absMax    = Math.max(state.salary, 1);
+            const remaining = yd.salaries[i] - yd.expTotals[i] - yd.loanTotals[i];
+            const absMax    = Math.max(...yd.salaries, 1);
             const barPct    = Math.min(100, (Math.abs(remaining) / absMax) * 100);
             const isCur     = i === thisMon && state.currentYear === thisYear;
             const color     = remaining < 0 ? 'var(--red)' : 'var(--green)';
@@ -681,38 +735,35 @@ function renderYear() {
       </div>
     </div>
 
-    <!-- Monthly table -->
     <div class="year-table-wrap">
       <table class="year-table">
         <thead>
-          <tr>
-            <th>Month</th>
-            <th>Expenses</th>
-            <th>Loans</th>
-            <th>Total</th>
-            <th>Remaining</th>
-          </tr>
+          <tr><th>Month</th><th>Salary</th><th>Expenses</th><th>Loans</th><th>Total</th><th>Remaining</th></tr>
         </thead>
         <tbody>
           ${MONTHS.map((name, i) => {
-            const exp   = monthTotals[i];
-            const total = exp + loans;
-            const rem   = state.salary - total;
+            const sal   = yd.salaries[i];
+            const exp   = yd.expTotals[i];
+            const loan  = yd.loanTotals[i];
+            const total = exp + loan;
+            const rem   = sal - total;
             const isCur = i === thisMon && state.currentYear === thisYear;
             return `
             <tr class="${isCur ? 'cur-month' : ''}" data-goto-month="${i}">
               <td>${name}</td>
+              <td>${sal > 0 ? fmt(sal) : '<span style="color:var(--muted)">—</span>'}</td>
               <td>${fmt(exp)}</td>
-              <td>${fmt(loans)}</td>
+              <td>${fmt(loan)}</td>
               <td>${fmt(total)}</td>
-              <td class="${rem < 0 ? 'negative' : 'positive'}">${fmt(rem)}</td>
+              <td class="${rem < 0 ? 'negative' : sal > 0 ? 'positive' : ''}">${sal > 0 ? fmt(rem) : '<span style="color:var(--muted)">—</span>'}</td>
             </tr>`;
           }).join('')}
         </tbody>
         <tfoot>
           <tr>
             <td class="label-cell">Full Year</td>
-            <td>${fmt(yearTotal)}</td>
+            <td>${fmt(yearSalary)}</td>
+            <td>${fmt(yearExp)}</td>
             <td>${fmt(yearLoans)}</td>
             <td>${fmt(yearGrand)}</td>
             <td class="${yearLeft < 0 ? 'negative' : 'positive'}">${fmt(yearLeft)}</td>
@@ -868,13 +919,13 @@ function bindEvents() {
   document.getElementById('addLoanBtn')?.addEventListener('click', () => openLoanModal());
   document.querySelectorAll('[data-edit-loan]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const l = state.loans.find(x => x.id === btn.dataset.editLoan);
+      const l = state.loans.find(x => x.id === parseInt(btn.dataset.editLoan));
       if (l) openLoanModal(l);
     });
   });
   document.querySelectorAll('[data-delete-loan]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const id = btn.dataset.deleteLoan;
+      const id = parseInt(btn.dataset.deleteLoan);
       if (!confirm('Remove this loan?')) return;
       state.loans = state.loans.filter(l => l.id !== id);
       saveLocal(); render();
@@ -1025,12 +1076,13 @@ function openLoanModal(loan = null) {
       showToast('Loan updated');
       withSync(() => sb.from('anna_loans').update({ name, monthly }).eq('id', loan.id));
     } else {
-      const id = 'L' + Date.now();
       try {
         setSyncStatus('syncing');
-        const { error } = await sb.from('anna_loans').insert({ id, name, monthly });
+        const { data, error } = await sb.from('anna_loans')
+          .insert({ name, monthly, year: state.currentYear, month: state.currentMonth })
+          .select().single();
         if (error) throw error;
-        state.loans.push({ id, name, monthly });
+        state.loans.push(data);
         saveLocal(); overlay.remove(); render();
         showToast('Loan added');
         setSyncStatus('synced');
@@ -1067,7 +1119,7 @@ function openSalaryModal() {
     state.salary = val;
     saveLocal(); overlay.remove(); render();
     showToast('Salary updated');
-    withSync(() => sb.from('anna_settings').upsert({ id: 1, salary: val }));
+    withSync(() => sb.from('anna_settings').upsert({ year: state.currentYear, month: state.currentMonth, salary: val }));
   });
   overlay.querySelector('#s-amount').select();
 }
@@ -1094,7 +1146,82 @@ async function init() {
   render();
 }
 
-init();
+/* ── Lock screen ── */
+const PIN = '1993';
+
+function showLock() {
+  let entered = '';
+
+  const el = document.createElement('div');
+  el.id = 'lock-screen';
+  el.innerHTML = `
+    <div class="lock-icon">€</div>
+    <div class="lock-title">ANNA</div>
+    <div class="lock-sub">Enter PIN to continue</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="keypad">
+      ${[1,2,3,4,5,6,7,8,9,'','0','⌫'].map(k => `
+        <button class="key-btn ${k==='' ? 'empty' : k==='⌫' ? 'del' : ''}"
+          data-key="${k}">${k}</button>`).join('')}
+    </div>`;
+  document.body.appendChild(el);
+
+  function updateDots() {
+    document.querySelectorAll('.pin-dot').forEach((d, i) => {
+      d.classList.toggle('filled', i < entered.length);
+    });
+  }
+
+  function wrong() {
+    const err = document.getElementById('pin-error');
+    err.textContent = 'Incorrect PIN';
+    el.style.animation = 'shake .35s';
+    setTimeout(() => { el.style.animation = ''; err.textContent = ''; }, 700);
+    entered = '';
+    updateDots();
+  }
+
+  el.addEventListener('click', e => {
+    const btn = e.target.closest('.key-btn');
+    if (!btn || btn.classList.contains('empty')) return;
+    const k = btn.dataset.key;
+    if (k === '⌫') {
+      entered = entered.slice(0, -1);
+    } else if (entered.length < 4) {
+      entered += k;
+      if (entered.length === 4) {
+        if (entered === PIN) {
+          sessionStorage.setItem('anna_ok', '1');
+          el.remove();
+          init();
+        } else {
+          wrong();
+        }
+        return;
+      }
+    }
+    updateDots();
+    document.getElementById('pin-error').textContent = '';
+  });
+}
+
+// Add shake keyframe
+const ks = document.createElement('style');
+ks.textContent = `@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-10px)} 40%,80%{transform:translateX(10px)} }`;
+document.head.appendChild(ks);
+
+// Start
+if (sessionStorage.getItem('anna_ok') === '1') {
+  init();
+} else {
+  showLock();
+}
 </script>
 
 <!-- Service worker + install prompt (non-module, runs globally) -->
