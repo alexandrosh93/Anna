@@ -251,18 +251,38 @@
     .btn-danger { background: transparent; color: var(--red); border: 1px solid transparent; font-size: .78rem; padding: 4px 7px; }
     .btn-danger:hover { border-color: var(--red); background: rgba(239,68,68,.07); }
 
-    .category-block { margin-bottom: 18px; }
-    .category-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 4px 2px 6px; border-bottom: 1px solid var(--border); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+    /* ── Category card (Google / Material style) ── */
+    .category-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .category-title {
+      font-size: .68rem; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--muted); padding: 10px 14px 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
     .category-total { color: var(--text); font-weight: 700; font-size: .78rem; }
 
-    .expense-row { display: grid; grid-template-columns: 40px 1fr auto auto; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 10px; transition: background .12s; }
+    .expense-row {
+      display: grid; grid-template-columns: 40px 1fr auto auto;
+      align-items: center; gap: 12px;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+    }
+    .expense-row:last-child { border-bottom: none; }
     .expense-row:hover { background: var(--surface2); }
     .cat-icon { width: 40px; height: 40px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
     .expense-info { min-width: 0; }
     .expense-name   { font-size: .88rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .expense-cat-tag { font-size: .68rem; color: var(--muted); margin-top: 1px; }
     .expense-note   { font-size: .7rem; color: var(--muted); }
-    .expense-amount { font-weight: 700; font-size: .88rem; text-align: right; white-space: nowrap; color: var(--red); }
+    .expense-amount { font-weight: 700; font-size: .9rem; text-align: right; white-space: nowrap; color: var(--red); }
 
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 44px 20px; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--muted); gap: 10px; }
     .empty-state .ei { font-size: 2.2rem; }
@@ -653,7 +673,7 @@ function renderMonthly() {
         }).join('')}
 
         <!-- Loans -->
-        <div class="category-block" style="margin-top:8px">
+        <div class="category-block">
           ${hasLoans ? `
           <div class="category-title">
             <span style="display:flex;align-items:center;gap:6px">
@@ -672,7 +692,7 @@ function renderMonthly() {
               <button class="btn btn-danger" data-delete-loan="${l.id}">✕</button>
             </div>
           </div>`).join('')}` : ''}
-          <div style="margin-top:10px">
+          <div style="padding:10px 14px">
             <button class="btn btn-ghost" id="addLoanBtn" style="width:100%">+ Add Loan</button>
           </div>
         </div>
