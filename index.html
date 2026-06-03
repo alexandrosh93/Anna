@@ -202,35 +202,75 @@
     .period-nav span { font-weight: 600; min-width: 140px; text-align: center; }
 
     /* ── Summary cards ── */
-    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .summary-grid { display: grid; gap: 16px; margin-bottom: 28px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-    .card .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
-    .card .value { font-size: 1.65rem; font-weight: 700; }
-    .card .sub   { font-size: .78rem; color: var(--muted); margin-top: 4px; }
-    .card.income .value { color: var(--green); }
-    .card.spent  .value { color: var(--orange); }
-    .card.left .value   { color: var(--green); }
-    .card.left.negative .value { color: var(--red); }
-    .progress-wrap { margin-top: 12px; }
-    .progress-bar  { height: 6px; border-radius: 99px; background: var(--surface2); overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 99px; transition: width .4s; }
     /* Balance hero card */
+    /* ── Balance hero card ── */
     .card.balance-hero {
-      background: linear-gradient(135deg, #4338ca, #7c3aed);
-      border-color: transparent;
+      background: linear-gradient(145deg, #1e1b4b 0%, #312e81 55%, #4c1d95 100%);
+      border: none;
+      border-radius: 22px;
       grid-column: 1 / -1;
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
-      padding: 22px 26px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(67,56,202,.38);
     }
-    .card.balance-hero .label { color: rgba(255,255,255,.7); }
-    .card.balance-hero .value { color: #fff; font-size: 2rem; }
-    .card.balance-hero .sub   { color: rgba(255,255,255,.55); }
-    .hero-right { display: flex; gap: 28px; }
-    .hero-stat { display: flex; flex-direction: column; align-items: flex-end; }
-    .hero-stat .hs-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.6); margin-bottom: 3px; }
-    .hero-stat .hs-val   { font-size: 1.05rem; font-weight: 700; color: #fff; }
-    .hero-stat .hs-val.green { color: #86efac; }
-    .hero-stat .hs-val.red   { color: #fca5a5; }
+    .bh-top {
+      display: flex;
+      gap: 0;
+    }
+    .bh-stat {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 22px 12px 18px;
+      gap: 5px;
+      position: relative;
+    }
+    .bh-stat + .bh-stat::before {
+      content: '';
+      position: absolute; left: 0; top: 20%; bottom: 20%;
+      width: 1px; background: rgba(255,255,255,.12);
+    }
+    .bh-stat.clickable { cursor: pointer; }
+    .bh-stat.clickable:hover { background: rgba(255,255,255,.05); }
+    .bh-label {
+      font-size: .63rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: rgba(255,255,255,.5);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .bh-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .bh-value {
+      font-size: 1.45rem; font-weight: 800; color: #fff;
+      display: flex; align-items: center; gap: 5px;
+      letter-spacing: -.02em;
+    }
+    .bh-value.green  { color: #86efac; }
+    .bh-value.red    { color: #fca5a5; }
+    .bh-value.orange { color: #fdba74; }
+    .bh-sub {
+      font-size: .65rem; color: rgba(255,255,255,.38);
+    }
+    .bh-edit-hint {
+      font-size: .7rem; color: rgba(255,255,255,.35);
+      line-height: 1;
+    }
+    /* progress bar strip at bottom */
+    .bh-bar {
+      height: 5px;
+      background: rgba(255,255,255,.1);
+      position: relative;
+    }
+    .bh-bar-fill {
+      position: absolute; left: 0; top: 0; bottom: 0;
+      border-radius: 0 3px 3px 0;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+    .bh-pct-label {
+      text-align: center;
+      font-size: .65rem; font-weight: 600;
+      color: rgba(255,255,255,.4);
+      padding: 6px 0 10px;
+    }
 
     /* ── Main grid (monthly tab) ── */
     .main-grid { display: grid; grid-template-columns: 1fr 330px; gap: 24px; align-items: start; }
@@ -599,28 +639,34 @@ function renderMonthly() {
 
     <div class="summary-grid">
       <div class="card balance-hero">
-        <div>
-          <div class="label">Balance</div>
-          <div class="value">${fmt(left)}</div>
-          <div class="sub">${state.salary > 0 ? pct + '% of salary spent' : 'Set salary to see %'}</div>
-          <div class="progress-wrap" style="width:200px;max-width:100%;margin-top:10px">
-            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+        <div class="bh-top">
+
+          <div class="bh-stat clickable" id="editSalaryBtn">
+            <div class="bh-label"><span class="bh-dot" style="background:#86efac"></span>Income</div>
+            <div class="bh-value green">
+              ${fmt(state.salary)}
+              <span class="bh-edit-hint">✏</span>
+            </div>
+            <div class="bh-sub">${state.salary === 0 ? 'Tap to set' : 'Net salary'}</div>
           </div>
+
+          <div class="bh-stat">
+            <div class="bh-label"><span class="bh-dot" style="background:#fca5a5"></span>Expenses</div>
+            <div class="bh-value red">${fmt(grandTotal)}</div>
+            <div class="bh-sub">${loans > 0 ? `incl. ${fmt(loans)} loans` : 'this month'}</div>
+          </div>
+
+          <div class="bh-stat">
+            <div class="bh-label"><span class="bh-dot" style="background:rgba(255,255,255,.4)"></span>Balance</div>
+            <div class="bh-value ${left < 0 ? 'red' : left < state.salary * 0.15 ? 'orange' : ''}">${fmt(left)}</div>
+            <div class="bh-sub">${state.salary > 0 ? pct + '% spent' : '—'}</div>
+          </div>
+
         </div>
-        <div class="hero-right">
-          <div class="hero-stat">
-            <span class="hs-label">Income</span>
-            <span class="hs-val green salary-row" id="editSalaryBtn" style="cursor:pointer;display:flex;align-items:center;gap:4px">
-              ${fmt(state.salary)}<span class="edit-icon" style="opacity:.7;font-size:.7rem">✏️</span>
-            </span>
-            <span style="font-size:.65rem;color:rgba(255,255,255,.45)">${state.salary === 0 ? 'tap to set' : 'monthly'}</span>
-          </div>
-          <div class="hero-stat">
-            <span class="hs-label">Spent</span>
-            <span class="hs-val red">${fmt(grandTotal)}</span>
-            <span style="font-size:.65rem;color:rgba(255,255,255,.45)">${loans > 0 ? `incl. ${fmt(loans)} loans` : 'this month'}</span>
-          </div>
+        <div class="bh-bar">
+          <div class="bh-bar-fill" style="width:${pct}%;background:${fillColor}"></div>
         </div>
+        ${state.salary > 0 ? `<div class="bh-pct-label">${pct}% of monthly salary spent</div>` : ''}
       </div>
     </div>
 
