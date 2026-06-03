@@ -16,7 +16,6 @@
       --accent2:  #a78bfa;
       --green:    #22c55e;
       --red:      #ef4444;
-      --yellow:   #eab308;
       --orange:   #f97316;
       --text:     #e2e8f0;
       --muted:    #94a3b8;
@@ -33,13 +32,9 @@
     }
     header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.5px; }
     header h1 span { color: var(--accent2); }
-
     .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-    .sync-badge {
-      font-size: .72rem; padding: 4px 10px; border-radius: 99px; font-weight: 600;
-      transition: all .3s;
-    }
+    .sync-badge { font-size: .72rem; padding: 4px 10px; border-radius: 99px; font-weight: 600; transition: all .3s; }
     .sync-badge.synced  { background: rgba(34,197,94,.15);  color: var(--green); }
     .sync-badge.syncing { background: rgba(108,99,255,.15); color: var(--accent2); }
     .sync-badge.error   { background: rgba(239,68,68,.15);  color: var(--red); }
@@ -49,17 +44,11 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 6px 14px;
     }
-    .month-nav button {
-      background: none; border: none; color: var(--accent2); font-size: 1.1rem;
-      cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: background .15s;
-    }
+    .month-nav button { background: none; border: none; color: var(--accent2); font-size: 1.1rem; cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: background .15s; }
     .month-nav button:hover { background: var(--surface2); }
     .month-nav span { font-weight: 600; min-width: 130px; text-align: center; }
 
-    .summary-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px; margin-bottom: 32px;
-    }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
     .card .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
     .card .value { font-size: 1.7rem; font-weight: 700; }
@@ -95,14 +84,20 @@
     }
     .category-total { color: var(--text); font-weight: 600; }
 
-    .expense-row {
-      display: grid; grid-template-columns: 1fr auto auto;
-      align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; transition: background .12s;
-    }
+    .expense-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; transition: background .12s; }
     .expense-row:hover { background: var(--surface2); }
     .expense-name   { font-size: .9rem; }
     .expense-note   { font-size: .72rem; color: var(--muted); }
     .expense-amount { font-weight: 600; font-size: .9rem; text-align: right; white-space: nowrap; }
+
+    /* Empty state */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 48px 24px; text-align: center; border: 1px dashed var(--border);
+      border-radius: var(--radius); color: var(--muted); gap: 12px;
+    }
+    .empty-state .empty-icon { font-size: 2.5rem; }
+    .empty-state p { font-size: .9rem; line-height: 1.5; }
 
     .right-panel { display: flex; flex-direction: column; gap: 20px; }
 
@@ -119,22 +114,13 @@
     .legend-val  { font-weight: 600; }
     .legend-pct  { color: var(--muted); font-size: .75rem; min-width: 36px; text-align: right; }
 
-    .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px;
-    }
-    .modal {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 28px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto;
-    }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; }
     .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
     .form-group input,
-    .form-group select {
-      width: 100%; background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text); border-radius: 8px; padding: 9px 12px; font-size: .9rem; outline: none; transition: border-color .15s;
-    }
+    .form-group select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 12px; font-size: .9rem; outline: none; transition: border-color .15s; }
     .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
@@ -143,11 +129,7 @@
     .salary-row:hover .edit-icon { opacity: 1; }
     .edit-icon { opacity: 0; font-size: .85rem; color: var(--accent2); transition: opacity .15s; }
 
-    .toast {
-      position: fixed; bottom: 28px; right: 24px; color: #fff;
-      padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: .85rem;
-      z-index: 200; animation: slideUp .25s ease;
-    }
+    .toast { position: fixed; bottom: 28px; right: 24px; color: #fff; padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: .85rem; z-index: 200; animation: slideUp .25s ease; }
     @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
     ::-webkit-scrollbar { width: 6px; }
@@ -161,13 +143,11 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-/* ── Supabase client ── */
 const sb = createClient(
   'https://oxjypyxpautowgomqlrm.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94anlweXhwYXV0b3dnb21xbHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzY5NDEsImV4cCI6MjA5NjAxMjk0MX0.0zh0qw9F_TIuZlPncc9tMBa81A7hJaq_E2ZXBwZQJ9s'
 );
 
-/* ── Constants ── */
 const CATEGORY_COLORS = [
   '#6c63ff','#a78bfa','#22c55e','#eab308','#f97316',
   '#ef4444','#06b6d4','#ec4899','#84cc16','#f59e0b'
@@ -181,10 +161,9 @@ const MONTH_NAMES = [
   'July','August','September','October','November','December'
 ];
 
-/* ── State ── */
 const now = new Date();
 let state = {
-  salary: 3183.13,
+  salary: 0,
   currentYear:  now.getFullYear(),
   currentMonth: now.getMonth(),
   expenses: [],
@@ -193,22 +172,15 @@ let state = {
 };
 let syncStatus = 'syncing';
 
-/* ── Local cache ── */
-function saveLocal() {
-  localStorage.setItem('anna_v3', JSON.stringify(state));
-}
-function loadLocal() {
-  try { const r = localStorage.getItem('anna_v3'); return r ? JSON.parse(r) : null; } catch { return null; }
-}
+function saveLocal() { localStorage.setItem('anna_v3', JSON.stringify(state)); }
+function loadLocal()  { try { const r = localStorage.getItem('anna_v3'); return r ? JSON.parse(r) : null; } catch { return null; } }
 
-/* ── Sync badge ── */
 function setSyncStatus(s) {
   syncStatus = s;
   const badge = document.getElementById('sync-badge');
   if (!badge) return;
   badge.className = 'sync-badge ' + s;
-  const labels = { synced: '● Synced', syncing: '↻ Syncing…', error: '✕ Offline' };
-  badge.textContent = labels[s] || s;
+  badge.textContent = { synced: '● Synced', syncing: '↻ Syncing…', error: '✕ Offline' }[s] || s;
 }
 
 async function withSync(fn) {
@@ -217,7 +189,6 @@ async function withSync(fn) {
   catch(e) { console.error(e); setSyncStatus('error'); showToast('Saved locally — sync failed', '#f97316'); }
 }
 
-/* ── Supabase fetch ── */
 async function fetchRemote() {
   const [expRes, settRes, loanRes, ovRes] = await Promise.all([
     sb.from('anna_expenses').select('*').order('id'),
@@ -225,26 +196,22 @@ async function fetchRemote() {
     sb.from('anna_loans').select('*').order('id'),
     sb.from('anna_monthly_overrides').select('*'),
   ]);
-
   if (expRes.error) throw expRes.error;
-
   const monthlyOverrides = {};
   (ovRes.data || []).forEach(o => {
     const key = `${o.year}-${o.month}`;
     if (!monthlyOverrides[key]) monthlyOverrides[key] = [];
     monthlyOverrides[key].push({ id: o.expense_id, amount: o.amount });
   });
-
   return {
-    salary: settRes.data?.salary ?? 3183.13,
+    salary:   settRes.data?.salary ?? 0,
     expenses: expRes.data || [],
-    loans: loanRes.data || [],
+    loans:    loanRes.data || [],
     monthlyOverrides,
   };
 }
 
-/* ── Helpers ── */
-const fmt = n => '€' + Number(n).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt      = n => '€' + Number(n).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const monthKey = () => `${state.currentYear}-${state.currentMonth}`;
 
 function getMonthExpenses() {
@@ -261,16 +228,13 @@ function getCategories(expenses) {
   return map;
 }
 
-/* ── Render ── */
 const root = document.getElementById('root');
 let toastTimer = null;
 
 function showToast(msg, color = '#22c55e') {
   document.querySelector('.toast')?.remove();
   const t = document.createElement('div');
-  t.className = 'toast';
-  t.style.background = color;
-  t.textContent = msg;
+  t.className = 'toast'; t.style.background = color; t.textContent = msg;
   document.body.appendChild(t);
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.remove(), 2800);
@@ -283,16 +247,17 @@ function render() {
   const loanTotal  = state.loans.reduce((s, l) => s + Number(l.monthly), 0);
   const grandTotal = expTotal + loanTotal;
   const left       = state.salary - grandTotal;
-  const pct        = Math.min(100, Math.round((grandTotal / state.salary) * 100));
+  const pct        = state.salary > 0 ? Math.min(100, Math.round((grandTotal / state.salary) * 100)) : 0;
+  const fillColor  = pct > 100 ? 'var(--red)' : pct > 85 ? 'var(--orange)' : 'var(--green)';
   const monthLabel = MONTH_NAMES[state.currentMonth] + ' ' + state.currentYear;
 
   const catTotals = Object.entries(catMap).map(([cat, items]) => ({
     cat, total: items.reduce((s, i) => s + Number(i.amount), 0)
   }));
-  catTotals.push({ cat: 'Loans', total: loanTotal });
+  if (loanTotal > 0) catTotals.push({ cat: 'Loans', total: loanTotal });
   catTotals.sort((a, b) => b.total - a.total);
 
-  const fillColor = pct > 100 ? 'var(--red)' : pct > 85 ? 'var(--orange)' : 'var(--green)';
+  const hasData = expenses.length > 0 || state.loans.length > 0;
 
   root.innerHTML = `
   <div class="app">
@@ -300,7 +265,7 @@ function render() {
       <h1>Anna <span>Expense Tracker</span></h1>
       <div class="header-right">
         <span id="sync-badge" class="sync-badge ${syncStatus}">
-          ${syncStatus === 'synced' ? '● Synced' : syncStatus === 'error' ? '✕ Offline' : '↻ Syncing…'}
+          ${{ synced:'● Synced', syncing:'↻ Syncing…', error:'✕ Offline' }[syncStatus]}
         </span>
         <div class="month-nav">
           <button id="prevMonth">&#8249;</button>
@@ -317,17 +282,17 @@ function render() {
           <div class="value">${fmt(state.salary)}</div>
           <span class="edit-icon">✏️</span>
         </div>
-        <div class="sub">Monthly take-home</div>
+        <div class="sub">${state.salary === 0 ? 'Click to set your salary' : 'Monthly take-home'}</div>
       </div>
       <div class="card spent">
         <div class="label">Total Expenses</div>
         <div class="value">${fmt(grandTotal)}</div>
-        <div class="sub">incl. ${fmt(loanTotal)} loans</div>
+        <div class="sub">${loanTotal > 0 ? `incl. ${fmt(loanTotal)} loans` : 'across all categories'}</div>
       </div>
       <div class="card left ${left < 0 ? 'negative' : ''}">
         <div class="label">Remaining</div>
         <div class="value">${fmt(left)}</div>
-        <div class="sub">${pct}% of salary spent</div>
+        <div class="sub">${state.salary > 0 ? pct + '% of salary spent' : 'Set salary to see %'}</div>
         <div class="progress-wrap">
           <div class="progress-bar">
             <div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div>
@@ -342,6 +307,12 @@ function render() {
           <h2>Expenses</h2>
           <button class="btn btn-primary" id="addExpenseBtn">+ Add Expense</button>
         </div>
+
+        ${!hasData ? `
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>No expenses yet.<br>Click <strong>+ Add Expense</strong> to get started.</p>
+        </div>` : ''}
 
         ${Object.entries(catMap).map(([cat, items]) => {
           const catTotal = items.reduce((s, i) => s + Number(i.amount), 0);
@@ -366,9 +337,10 @@ function render() {
           </div>`;
         }).join('')}
 
-        <div class="category-block">
+        <div class="category-block" style="${!hasData ? 'margin-top:16px' : ''}">
+          ${state.loans.length > 0 ? `
           <div class="category-title">
-            <span>Loans (monthly installments)</span>
+            <span>Loans</span>
             <span class="category-total">${fmt(loanTotal)}</span>
           </div>
           ${state.loans.map(l => `
@@ -379,7 +351,7 @@ function render() {
               <button class="btn btn-ghost" style="font-size:.75rem;padding:4px 8px" data-edit-loan="${l.id}">Edit</button>
               <button class="btn btn-danger" data-delete-loan="${l.id}">✕</button>
             </div>
-          </div>`).join('')}
+          </div>`).join('')}` : ''}
           <div style="margin-top:10px">
             <button class="btn btn-ghost" id="addLoanBtn" style="width:100%">+ Add Loan</button>
           </div>
@@ -389,6 +361,11 @@ function render() {
       <div class="right-panel">
         <div class="chart-wrap">
           <h2>Breakdown</h2>
+          ${grandTotal === 0 ? `
+          <div class="empty-state" style="border:none;padding:24px 0">
+            <div class="empty-icon">📊</div>
+            <p>Chart appears once you add expenses.</p>
+          </div>` : `
           <div class="donut-container">
             ${buildDonut(catTotals, grandTotal)}
             <div class="donut-center">
@@ -402,9 +379,9 @@ function render() {
               <div class="legend-dot" style="background:${CATEGORY_COLORS[i % CATEGORY_COLORS.length]}"></div>
               <span class="legend-name">${c.cat}</span>
               <span class="legend-val">${fmt(c.total)}</span>
-              <span class="legend-pct">${grandTotal ? Math.round((c.total/grandTotal)*100) : 0}%</span>
+              <span class="legend-pct">${Math.round((c.total / grandTotal) * 100)}%</span>
             </div>`).join('')}
-          </div>
+          </div>`}
         </div>
       </div>
     </div>
@@ -414,12 +391,10 @@ function render() {
 }
 
 function buildDonut(catTotals, total) {
-  if (total === 0) return '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#2e3250" stroke-width="3.5"/></svg>';
   const r = 15.9, circ = 2 * Math.PI * r;
   let offset = 0;
   const segs = catTotals.map((c, i) => {
-    const pct = c.total / total;
-    const dash = pct * circ, gap = circ - dash;
+    const dash = (c.total / total) * circ, gap = circ - dash;
     const seg = `<circle cx="18" cy="18" r="${r}" fill="none"
       stroke="${CATEGORY_COLORS[i % CATEGORY_COLORS.length]}" stroke-width="3.5"
       stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offset}"
@@ -430,7 +405,6 @@ function buildDonut(catTotals, total) {
   return `<svg viewBox="0 0 36 36" style="width:100%;height:auto">${segs.join('')}</svg>`;
 }
 
-/* ── Events ── */
 function bindEvents() {
   document.getElementById('prevMonth')?.addEventListener('click', () => {
     state.currentMonth--;
@@ -449,8 +423,7 @@ function bindEvents() {
 
   document.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = parseInt(btn.dataset.edit);
-      const e  = getMonthExpenses().find(x => x.id === id);
+      const e = getMonthExpenses().find(x => x.id === parseInt(btn.dataset.edit));
       if (e) openExpenseModal(e);
     });
   });
@@ -485,18 +458,17 @@ function bindEvents() {
   });
 }
 
-/* ── Modals ── */
 function openExpenseModal(expense = null) {
   const isEdit = !!expense;
   const overlay = document.createElement('div');
   overlay.className = 'overlay';
   overlay.innerHTML = `
     <div class="modal">
-      <h3>${isEdit ? 'Edit Expense' : 'Add Expense'}</h3>
+      <h3>${isEdit ? 'Edit Expense' : 'New Expense'}</h3>
       <div class="form-row">
         <div class="form-group">
           <label>Name</label>
-          <input id="m-name" type="text" value="${isEdit ? expense.name : ''}" placeholder="e.g. Netflix" />
+          <input id="m-name" type="text" value="${isEdit ? expense.name : ''}" placeholder="e.g. Rent" />
         </div>
         <div class="form-group">
           <label>Amount (€)</label>
@@ -533,17 +505,16 @@ function openExpenseModal(expense = null) {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
   overlay.querySelector('#m-save').addEventListener('click', async () => {
-    const name   = overlay.querySelector('#m-name').value.trim();
-    const amount = parseFloat(overlay.querySelector('#m-amount').value);
-    const cat    = overlay.querySelector('#m-cat').value;
-    const note   = overlay.querySelector('#m-note').value.trim();
+    const name      = overlay.querySelector('#m-name').value.trim();
+    const amount    = parseFloat(overlay.querySelector('#m-amount').value);
+    const cat       = overlay.querySelector('#m-cat').value;
+    const note      = overlay.querySelector('#m-note').value.trim();
     const monthOnly = isEdit && overlay.querySelector('#m-thismonth')?.checked;
 
     if (!name || isNaN(amount) || amount < 0) { alert('Please enter a valid name and amount.'); return; }
 
     const saveBtn = overlay.querySelector('#m-save');
-    saveBtn.disabled = true;
-    saveBtn.textContent = '…';
+    saveBtn.disabled = true; saveBtn.textContent = '…';
 
     if (isEdit) {
       if (monthOnly) {
@@ -583,8 +554,7 @@ function openExpenseModal(expense = null) {
       } catch(e) {
         console.error(e);
         setSyncStatus('error');
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Add';
+        saveBtn.disabled = false; saveBtn.textContent = 'Add';
         showToast('Could not save — check connection', '#ef4444');
       }
     }
@@ -599,7 +569,7 @@ function openLoanModal(loan = null) {
   overlay.className = 'overlay';
   overlay.innerHTML = `
     <div class="modal">
-      <h3>${isEdit ? 'Edit Loan' : 'Add Loan'}</h3>
+      <h3>${isEdit ? 'Edit Loan' : 'New Loan'}</h3>
       <div class="form-row">
         <div class="form-group">
           <label>Loan Name</label>
@@ -620,7 +590,7 @@ function openLoanModal(loan = null) {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
   overlay.querySelector('#l-save').addEventListener('click', async () => {
-    const name   = overlay.querySelector('#l-name').value.trim();
+    const name    = overlay.querySelector('#l-name').value.trim();
     const monthly = parseFloat(overlay.querySelector('#l-amount').value);
     if (!name || isNaN(monthly) || monthly < 0) { alert('Please enter a valid name and amount.'); return; }
 
@@ -658,10 +628,10 @@ function openSalaryModal() {
   overlay.className = 'overlay';
   overlay.innerHTML = `
     <div class="modal">
-      <h3>Edit Net Salary</h3>
+      <h3>Set Net Salary</h3>
       <div class="form-group">
         <label>Monthly Net Salary (€)</label>
-        <input id="s-amount" type="number" step="0.01" min="0" value="${state.salary}" />
+        <input id="s-amount" type="number" step="0.01" min="0" value="${state.salary || ''}" placeholder="0.00" />
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="s-cancel">Cancel</button>
@@ -682,37 +652,22 @@ function openSalaryModal() {
   overlay.querySelector('#s-amount').select();
 }
 
-/* ── Boot ── */
 async function init() {
-  // Render from cache instantly
   const cached = loadLocal();
   if (cached?.expenses?.length) {
-    state = {
-      ...cached,
-      currentYear:  now.getFullYear(),
-      currentMonth: now.getMonth(),
-    };
+    state = { ...cached, currentYear: now.getFullYear(), currentMonth: now.getMonth() };
     render();
   }
-
-  // Fetch live data from Supabase
   try {
     const remote = await fetchRemote();
-    state = {
-      ...state,
-      salary:           remote.salary,
-      expenses:         remote.expenses,
-      loans:            remote.loans,
-      monthlyOverrides: remote.monthlyOverrides,
-    };
+    state = { ...state, salary: remote.salary, expenses: remote.expenses, loans: remote.loans, monthlyOverrides: remote.monthlyOverrides };
     saveLocal();
     setSyncStatus('synced');
   } catch(e) {
-    console.error('Supabase init failed:', e);
+    console.error(e);
     setSyncStatus('error');
     showToast('Could not reach database — using local data', '#f97316');
   }
-
   render();
 }
 
