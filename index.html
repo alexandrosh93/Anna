@@ -202,75 +202,18 @@
     .period-nav span { font-weight: 600; min-width: 140px; text-align: center; }
 
     /* ── Summary cards ── */
-    .summary-grid { display: grid; gap: 16px; margin-bottom: 28px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-    /* Balance hero card */
-    /* ── Balance hero card ── */
-    .card.balance-hero {
-      background: linear-gradient(145deg, #1e1b4b 0%, #312e81 55%, #4c1d95 100%);
-      border: none;
-      border-radius: 22px;
-      grid-column: 1 / -1;
-      padding: 0;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(67,56,202,.38);
-    }
-    .bh-top {
-      display: flex;
-      gap: 0;
-    }
-    .bh-stat {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: center;
-      padding: 22px 12px 18px;
-      gap: 5px;
-      position: relative;
-    }
-    .bh-stat + .bh-stat::before {
-      content: '';
-      position: absolute; left: 0; top: 20%; bottom: 20%;
-      width: 1px; background: rgba(255,255,255,.12);
-    }
-    .bh-stat.clickable { cursor: pointer; }
-    .bh-stat.clickable:hover { background: rgba(255,255,255,.05); }
-    .bh-label {
-      font-size: .63rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .1em; color: rgba(255,255,255,.5);
-      display: flex; align-items: center; gap: 5px;
-    }
-    .bh-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .bh-value {
-      font-size: 1.45rem; font-weight: 800; color: #fff;
-      display: flex; align-items: center; gap: 5px;
-      letter-spacing: -.02em;
-    }
-    .bh-value.green  { color: #86efac; }
-    .bh-value.red    { color: #fca5a5; }
-    .bh-value.orange { color: #fdba74; }
-    .bh-sub {
-      font-size: .65rem; color: rgba(255,255,255,.38);
-    }
-    .bh-edit-hint {
-      font-size: .7rem; color: rgba(255,255,255,.35);
-      line-height: 1;
-    }
-    /* progress bar strip at bottom */
-    .bh-bar {
-      height: 5px;
-      background: rgba(255,255,255,.1);
-      position: relative;
-    }
-    .bh-bar-fill {
-      position: absolute; left: 0; top: 0; bottom: 0;
-      border-radius: 0 3px 3px 0;
-      transition: width .5s cubic-bezier(.4,0,.2,1);
-    }
-    .bh-pct-label {
-      text-align: center;
-      font-size: .65rem; font-weight: 600;
-      color: rgba(255,255,255,.4);
-      padding: 6px 0 10px;
-    }
+    .card .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+    .card .value { font-size: 1.65rem; font-weight: 700; }
+    .card .sub   { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+    .card.income .value { color: var(--green); }
+    .card.spent  .value { color: var(--orange); }
+    .card.left   .value { color: var(--green); }
+    .card.left.negative .value { color: var(--red); }
+    .progress-wrap { margin-top: 12px; }
+    .progress-bar  { height: 6px; border-radius: 99px; background: var(--surface2); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 99px; transition: width .4s; }
 
     /* ── Main grid (monthly tab) ── */
     .main-grid { display: grid; grid-template-columns: 1fr 330px; gap: 24px; align-items: start; }
@@ -380,6 +323,11 @@
     /* ── Modals ── */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
     .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 26px; width: 100%; max-width: 430px; max-height: 92vh; overflow-y: auto; }
+    /* Mobile: slide up from bottom so keyboard doesn't bury the modal */
+    @media (max-width: 600px) {
+      .overlay { align-items: flex-end; padding: 0; }
+      .modal { border-radius: 20px 20px 0 0; max-height: 85vh; padding: 22px 20px 32px; }
+    }
     .modal h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
     .form-group { margin-bottom: 14px; }
     .form-group label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 5px; }
@@ -638,35 +586,26 @@ function renderMonthly() {
     </div>
 
     <div class="summary-grid">
-      <div class="card balance-hero">
-        <div class="bh-top">
-
-          <div class="bh-stat clickable" id="editSalaryBtn">
-            <div class="bh-label"><span class="bh-dot" style="background:#86efac"></span>Income</div>
-            <div class="bh-value green">
-              ${fmt(state.salary)}
-              <span class="bh-edit-hint">✏</span>
-            </div>
-            <div class="bh-sub">${state.salary === 0 ? 'Tap to set' : 'Net salary'}</div>
-          </div>
-
-          <div class="bh-stat">
-            <div class="bh-label"><span class="bh-dot" style="background:#fca5a5"></span>Expenses</div>
-            <div class="bh-value red">${fmt(grandTotal)}</div>
-            <div class="bh-sub">${loans > 0 ? `incl. ${fmt(loans)} loans` : 'this month'}</div>
-          </div>
-
-          <div class="bh-stat">
-            <div class="bh-label"><span class="bh-dot" style="background:rgba(255,255,255,.4)"></span>Balance</div>
-            <div class="bh-value ${left < 0 ? 'red' : left < state.salary * 0.15 ? 'orange' : ''}">${fmt(left)}</div>
-            <div class="bh-sub">${state.salary > 0 ? pct + '% spent' : '—'}</div>
-          </div>
-
+      <div class="card income">
+        <div class="label">Net Salary</div>
+        <div class="salary-row" id="editSalaryBtn">
+          <div class="value">${fmt(state.salary)}</div>
+          <span class="edit-icon">✏️</span>
         </div>
-        <div class="bh-bar">
-          <div class="bh-bar-fill" style="width:${pct}%;background:${fillColor}"></div>
+        <div class="sub">${state.salary === 0 ? 'Click to set salary' : 'Monthly take-home'}</div>
+      </div>
+      <div class="card spent">
+        <div class="label">Expenses</div>
+        <div class="value">${fmt(grandTotal)}</div>
+        <div class="sub">${loans > 0 ? `incl. ${fmt(loans)} loans` : 'this month'}</div>
+      </div>
+      <div class="card left ${left < 0 ? 'negative' : ''}">
+        <div class="label">Remaining</div>
+        <div class="value">${fmt(left)}</div>
+        <div class="sub">${state.salary > 0 ? pct + '% of salary spent' : 'Set salary to see %'}</div>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div></div>
         </div>
-        ${state.salary > 0 ? `<div class="bh-pct-label">${pct}% of monthly salary spent</div>` : ''}
       </div>
     </div>
 
@@ -1106,7 +1045,7 @@ function openExpenseModal(expense = null) {
         </div>
         <div class="form-group">
           <label>Amount (€)</label>
-          <input id="m-amount" type="number" step="0.01" min="0" value="${isEdit ? expense.amount : ''}" placeholder="0.00" />
+          <input id="m-amount" type="number" inputmode="decimal" step="0.01" min="0" value="${isEdit ? expense.amount : ''}" placeholder="0.00" />
         </div>
       </div>
       <div class="form-row">
@@ -1178,7 +1117,7 @@ function openLoanModal(loan = null) {
     <div class="modal">
       <h3>${isEdit ? 'Edit Loan' : 'New Loan'}</h3>
       <div class="form-group"><label>Loan Name</label><input id="l-name" type="text" value="${isEdit ? loan.name : ''}" placeholder="e.g. Car Loan" /></div>
-      <div class="form-group"><label>Monthly Installment (€)</label><input id="l-amount" type="number" step="0.01" min="0" value="${isEdit ? loan.monthly : ''}" placeholder="0.00" /></div>
+      <div class="form-group"><label>Monthly Installment (€)</label><input id="l-amount" type="number" inputmode="decimal" step="0.01" min="0" value="${isEdit ? loan.monthly : ''}" placeholder="0.00" /></div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="l-cancel">Cancel</button>
         <button class="btn btn-primary" id="l-save">${isEdit ? 'Save' : 'Add'}</button>
@@ -1228,7 +1167,7 @@ function openSalaryModal() {
       <h3>Set Net Salary</h3>
       <div class="form-group">
         <label>Monthly Net Salary (€)</label>
-        <input id="s-amount" type="number" step="0.01" min="0" value="${state.salary || ''}" placeholder="0.00" />
+        <input id="s-amount" type="number" inputmode="decimal" step="0.01" min="0" value="${state.salary || ''}" placeholder="0.00" />
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="s-cancel">Cancel</button>
