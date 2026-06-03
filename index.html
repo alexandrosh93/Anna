@@ -5,294 +5,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Anna — Monthly Expense Tracker</title>
   <style>
-    /* ── Reset & base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0f1117;
-      --surface:   #1a1d27;
-      --surface2:  #22263a;
-      --border:    #2e3250;
-      --accent:    #6c63ff;
-      --accent2:   #a78bfa;
-      --green:     #22c55e;
-      --red:       #ef4444;
-      --yellow:    #eab308;
-      --orange:    #f97316;
-      --text:      #e2e8f0;
-      --muted:     #94a3b8;
-      --radius:    12px;
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --surface2: #22263a;
+      --border:   #2e3250;
+      --accent:   #6c63ff;
+      --accent2:  #a78bfa;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --yellow:   #eab308;
+      --orange:   #f97316;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --radius:   12px;
     }
 
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* ── Layout ── */
     .app { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
 
     header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      gap: 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
     }
-
     header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.5px; }
     header h1 span { color: var(--accent2); }
 
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .sync-badge {
+      font-size: .72rem; padding: 4px 10px; border-radius: 99px; font-weight: 600;
+      transition: all .3s;
+    }
+    .sync-badge.synced  { background: rgba(34,197,94,.15);  color: var(--green); }
+    .sync-badge.syncing { background: rgba(108,99,255,.15); color: var(--accent2); }
+    .sync-badge.error   { background: rgba(239,68,68,.15);  color: var(--red); }
+
     .month-nav {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 6px 14px;
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 6px 14px;
     }
     .month-nav button {
-      background: none;
-      border: none;
-      color: var(--accent2);
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 2px 6px;
-      border-radius: 6px;
-      transition: background .15s;
+      background: none; border: none; color: var(--accent2); font-size: 1.1rem;
+      cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: background .15s;
     }
     .month-nav button:hover { background: var(--surface2); }
     .month-nav span { font-weight: 600; min-width: 130px; text-align: center; }
 
-    /* ── Summary cards ── */
     .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 32px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 32px;
     }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-    }
-
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
     .card .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
     .card .value { font-size: 1.7rem; font-weight: 700; }
     .card .sub   { font-size: .8rem; color: var(--muted); margin-top: 4px; }
-
-    .card.income  .value { color: var(--green); }
-    .card.spent   .value { color: var(--orange); }
-    .card.left    .value { color: var(--text); }
+    .card.income .value { color: var(--green); }
+    .card.spent  .value { color: var(--orange); }
     .card.left.negative .value { color: var(--red); }
-
-    /* progress bar */
     .progress-wrap { margin-top: 12px; }
     .progress-bar  { height: 6px; border-radius: 99px; background: var(--surface2); overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 99px; transition: width .4s; }
 
-    /* ── Main grid ── */
-    .main-grid {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 24px;
-      align-items: start;
-    }
-    @media (max-width: 820px) {
-      .main-grid { grid-template-columns: 1fr; }
-    }
+    .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+    @media (max-width: 820px) { .main-grid { grid-template-columns: 1fr; } }
 
-    /* ── Expense list ── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .section-header h2 { font-size: 1rem; font-weight: 600; }
 
-    .btn {
-      border: none;
-      cursor: pointer;
-      border-radius: 8px;
-      font-size: .85rem;
-      font-weight: 600;
-      padding: 7px 14px;
-      transition: opacity .15s, transform .1s;
-    }
+    .btn { border: none; cursor: pointer; border-radius: 8px; font-size: .85rem; font-weight: 600; padding: 7px 14px; transition: opacity .15s, transform .1s; }
     .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .5; cursor: default; }
     .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { opacity: .88; }
-    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-primary:hover:not(:disabled) { opacity: .88; }
+    .btn-ghost  { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-ghost:hover { border-color: var(--accent); }
     .btn-danger { background: transparent; color: var(--red); border: 1px solid transparent; font-size: .8rem; padding: 4px 8px; }
     .btn-danger:hover { border-color: var(--red); }
 
     .category-block { margin-bottom: 16px; }
     .category-title {
-      font-size: .7rem;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      color: var(--muted);
-      padding: 6px 4px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
+      font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+      padding: 6px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+      display: flex; justify-content: space-between;
     }
     .category-total { color: var(--text); font-weight: 600; }
 
     .expense-row {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 10px;
-      border-radius: 8px;
-      transition: background .12s;
+      display: grid; grid-template-columns: 1fr auto auto;
+      align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; transition: background .12s;
     }
     .expense-row:hover { background: var(--surface2); }
+    .expense-name   { font-size: .9rem; }
+    .expense-note   { font-size: .72rem; color: var(--muted); }
+    .expense-amount { font-weight: 600; font-size: .9rem; text-align: right; white-space: nowrap; }
 
-    .expense-name { font-size: .9rem; }
-    .expense-note { font-size: .72rem; color: var(--muted); }
-    .expense-amount {
-      font-weight: 600;
-      font-size: .9rem;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    /* ── Right panel ── */
     .right-panel { display: flex; flex-direction: column; gap: 20px; }
 
-    /* donut chart */
-    .chart-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-    }
+    .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
     .chart-wrap h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
-
     .donut-container { position: relative; width: 180px; margin: 0 auto 16px; }
-    .donut-center {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
+    .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
     .donut-center .dc-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; }
     .donut-center .dc-value { font-size: 1.2rem; font-weight: 700; }
-
     .legend { display: flex; flex-direction: column; gap: 8px; }
-    .legend-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: .82rem;
-    }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-row { display: flex; align-items: center; gap: 10px; font-size: .82rem; }
+    .legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .legend-name { flex: 1; color: var(--muted); }
-    .legend-val { font-weight: 600; }
-    .legend-pct { color: var(--muted); font-size: .75rem; min-width: 36px; text-align: right; }
+    .legend-val  { font-weight: 600; }
+    .legend-pct  { color: var(--muted); font-size: .75rem; min-width: 36px; text-align: right; }
 
-    /* loans card */
-    .loans-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-    }
-    .loans-card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 14px; }
-    .loan-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 9px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: .875rem;
-    }
-    .loan-row:last-child { border-bottom: none; }
-    .loan-name { color: var(--muted); }
-    .loan-amount { font-weight: 600; }
-
-    /* ── Modal ── */
     .overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.6);
-      backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 100;
-      padding: 16px;
+      position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px;
     }
     .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      width: 100%;
-      max-width: 440px;
-      max-height: 90vh;
-      overflow-y: auto;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto;
     }
     .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
-
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
     .form-group input,
     .form-group select {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-size: .9rem;
-      outline: none;
-      transition: border-color .15s;
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 9px 12px; font-size: .9rem; outline: none; transition: border-color .15s;
     }
-    .form-group input:focus,
-    .form-group select:focus { border-color: var(--accent); }
-
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
 
-    /* ── Salary editor ── */
-    .salary-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-    }
+    .salary-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
     .salary-row:hover .edit-icon { opacity: 1; }
     .edit-icon { opacity: 0; font-size: .85rem; color: var(--accent2); transition: opacity .15s; }
 
-    /* ── Toast ── */
     .toast {
-      position: fixed;
-      bottom: 28px;
-      right: 24px;
-      background: var(--green);
-      color: #fff;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: .85rem;
-      z-index: 200;
-      animation: slideUp .25s ease;
+      position: fixed; bottom: 28px; right: 24px; color: #fff;
+      padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: .85rem;
+      z-index: 200; animation: slideUp .25s ease;
     }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
-    /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--surface); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
@@ -302,89 +159,96 @@
 <div id="root"></div>
 
 <script type="module">
-/* ── Data defaults ── */
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+/* ── Supabase client ── */
+const sb = createClient(
+  'https://oxjypyxpautowgomqlrm.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94anlweXhwYXV0b3dnb21xbHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzY5NDEsImV4cCI6MjA5NjAxMjk0MX0.0zh0qw9F_TIuZlPncc9tMBa81A7hJaq_E2ZXBwZQJ9s'
+);
+
+/* ── Constants ── */
 const CATEGORY_COLORS = [
   '#6c63ff','#a78bfa','#22c55e','#eab308','#f97316',
   '#ef4444','#06b6d4','#ec4899','#84cc16','#f59e0b'
 ];
-
-const DEFAULT_EXPENSES = [
-  // ── Insurance ──
-  { id: 1,  name: 'Eurolife',        category: 'Insurance',   amount: 120,   note: 'Tax exempt', recurring: true },
-  { id: 2,  name: 'T-Roc Ασφάλεια', category: 'Insurance',   amount: 52,    note: 'Car insurance', recurring: true },
-  { id: 3,  name: 'CNP FLAT',        category: 'Insurance',   amount: 22,    note: 'Home insurance ×10 months', recurring: true },
-  // ── Housing ──
-  { id: 4,  name: 'Σταθερά',         category: 'Housing',     amount: 920,   note: 'Fixed monthly', recurring: true },
-  // ── Utilities ──
-  { id: 5,  name: 'Primetel',        category: 'Utilities',   amount: 77,    note: 'Telecom', recurring: true },
-  { id: 6,  name: 'EAC',             category: 'Utilities',   amount: 80,    note: 'Electricity', recurring: true },
-  { id: 7,  name: 'WB',              category: 'Utilities',   amount: 20,    note: 'Quarterly ÷3', recurring: true },
-  // ── Health ──
-  { id: 8,  name: 'ANNA',            category: 'Health',      amount: 90,    note: 'Health plan', recurring: true },
-  { id: 9,  name: 'Βιταμίνες',       category: 'Health',      amount: 50,    note: '', recurring: true },
-  { id: 10, name: 'Φάρμακα',         category: 'Health',      amount: 300,   note: '', recurring: true },
-  { id: 11, name: 'Φακοί',           category: 'Health',      amount: 170,   note: 'After health fund return', recurring: true },
-  // ── Personal Care ──
-  { id: 12, name: 'Face Care',       category: 'Personal Care', amount: 40,  note: '', recurring: true },
-  { id: 13, name: 'Ialuna',          category: 'Personal Care', amount: 18,  note: '', recurring: true },
-  // ── Food & Groceries ──
-  { id: 14, name: 'Σούπερ Μάρκετ',  category: 'Groceries',   amount: 300,   note: '', recurring: true },
-  // ── Pocket & Leisure ──
-  { id: 15, name: 'Πεζίνες',         category: 'Leisure',     amount: 60,    note: 'Pocket money', recurring: true },
-  { id: 16, name: 'Κινόχρηστα',      category: 'Leisure',     amount: 70,    note: '', recurring: true },
-  // ── Card installments ──
-  { id: 17, name: 'Card Installments', category: 'Installments', amount: 150, note: '', recurring: true },
-  // ── Transport ──
-  { id: 18, name: 'Άδεια Κυκλοφορίας', category: 'Transport', amount: 67,   note: 'Annual ÷12', recurring: true },
-  { id: 19, name: 'Fleksy',           category: 'Transport',   amount: 262,   note: '', recurring: true },
-];
-
-const DEFAULT_LOANS = [
-  { id: 'L1', name: 'Loan 1', monthly: 257.76 },
-  { id: 'L2', name: 'Loan 2', monthly: 295.50 },
-  { id: 'L3', name: 'Loan 3', monthly: 200.11 },
-  { id: 'L4', name: 'Loan 4', monthly:  60.40 },
-];
-
 const CATEGORIES = [
   'Housing','Utilities','Insurance','Health','Personal Care',
   'Groceries','Leisure','Installments','Transport','Other'
 ];
+const MONTH_NAMES = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December'
+];
 
 /* ── State ── */
-const MONTH_NAMES = ['January','February','March','April','May','June',
-  'July','August','September','October','November','December'];
+const now = new Date();
+let state = {
+  salary: 3183.13,
+  currentYear:  now.getFullYear(),
+  currentMonth: now.getMonth(),
+  expenses: [],
+  loans: [],
+  monthlyOverrides: {},
+};
+let syncStatus = 'syncing';
 
-let state = loadState();
+/* ── Local cache ── */
+function saveLocal() {
+  localStorage.setItem('anna_v3', JSON.stringify(state));
+}
+function loadLocal() {
+  try { const r = localStorage.getItem('anna_v3'); return r ? JSON.parse(r) : null; } catch { return null; }
+}
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem('anna_expenses_v2');
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  const now = new Date();
+/* ── Sync badge ── */
+function setSyncStatus(s) {
+  syncStatus = s;
+  const badge = document.getElementById('sync-badge');
+  if (!badge) return;
+  badge.className = 'sync-badge ' + s;
+  const labels = { synced: '● Synced', syncing: '↻ Syncing…', error: '✕ Offline' };
+  badge.textContent = labels[s] || s;
+}
+
+async function withSync(fn) {
+  setSyncStatus('syncing');
+  try { await fn(); setSyncStatus('synced'); }
+  catch(e) { console.error(e); setSyncStatus('error'); showToast('Saved locally — sync failed', '#f97316'); }
+}
+
+/* ── Supabase fetch ── */
+async function fetchRemote() {
+  const [expRes, settRes, loanRes, ovRes] = await Promise.all([
+    sb.from('anna_expenses').select('*').order('id'),
+    sb.from('anna_settings').select('*').eq('id', 1).single(),
+    sb.from('anna_loans').select('*').order('id'),
+    sb.from('anna_monthly_overrides').select('*'),
+  ]);
+
+  if (expRes.error) throw expRes.error;
+
+  const monthlyOverrides = {};
+  (ovRes.data || []).forEach(o => {
+    const key = `${o.year}-${o.month}`;
+    if (!monthlyOverrides[key]) monthlyOverrides[key] = [];
+    monthlyOverrides[key].push({ id: o.expense_id, amount: o.amount });
+  });
+
   return {
-    salary: 3183.13,
-    currentYear:  now.getFullYear(),
-    currentMonth: now.getMonth(),
-    expenses: DEFAULT_EXPENSES,
-    loans: DEFAULT_LOANS,
-    monthlyOverrides: {},   // { "2026-5": [ { id, amount } ] }  – per-month amount overrides
-    nextId: 100,
+    salary: settRes.data?.salary ?? 3183.13,
+    expenses: expRes.data || [],
+    loans: loanRes.data || [],
+    monthlyOverrides,
   };
 }
 
-function saveState() {
-  localStorage.setItem('anna_expenses_v2', JSON.stringify(state));
-}
-
 /* ── Helpers ── */
-const fmt = (n) => '€' + n.toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = n => '€' + Number(n).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const monthKey = () => `${state.currentYear}-${state.currentMonth}`;
 
 function getMonthExpenses() {
-  const key = monthKey();
-  const overrides = state.monthlyOverrides[key] || [];
+  const overrides = state.monthlyOverrides[monthKey()] || [];
   return state.expenses.map(e => {
     const ov = overrides.find(o => o.id === e.id);
     return ov ? { ...e, amount: ov.amount } : { ...e };
@@ -393,67 +257,59 @@ function getMonthExpenses() {
 
 function getCategories(expenses) {
   const map = {};
-  expenses.forEach(e => {
-    if (!map[e.category]) map[e.category] = [];
-    map[e.category].push(e);
-  });
+  expenses.forEach(e => { if (!map[e.category]) map[e.category] = []; map[e.category].push(e); });
   return map;
 }
 
-function totalLoans() {
-  return state.loans.reduce((s, l) => s + l.monthly, 0);
-}
-
-function totalExpenses(expenses) {
-  return expenses.reduce((s, e) => s + e.amount, 0) + totalLoans();
-}
-
-/* ── Rendering ── */
+/* ── Render ── */
 const root = document.getElementById('root');
 let toastTimer = null;
 
 function showToast(msg, color = '#22c55e') {
-  let t = document.querySelector('.toast');
-  if (t) t.remove();
-  t = document.createElement('div');
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div');
   t.className = 'toast';
   t.style.background = color;
   t.textContent = msg;
   document.body.appendChild(t);
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t?.remove(), 2500);
+  toastTimer = setTimeout(() => t.remove(), 2800);
 }
 
 function render() {
-  const expenses  = getMonthExpenses();
-  const catMap    = getCategories(expenses);
-  const expTotal  = expenses.reduce((s, e) => s + e.amount, 0);
-  const loanTotal = totalLoans();
+  const expenses   = getMonthExpenses();
+  const catMap     = getCategories(expenses);
+  const expTotal   = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const loanTotal  = state.loans.reduce((s, l) => s + Number(l.monthly), 0);
   const grandTotal = expTotal + loanTotal;
   const left       = state.salary - grandTotal;
   const pct        = Math.min(100, Math.round((grandTotal / state.salary) * 100));
   const monthLabel = MONTH_NAMES[state.currentMonth] + ' ' + state.currentYear;
 
-  // category totals for chart
   const catTotals = Object.entries(catMap).map(([cat, items]) => ({
-    cat,
-    total: items.reduce((s, i) => s + i.amount, 0)
+    cat, total: items.reduce((s, i) => s + Number(i.amount), 0)
   }));
   catTotals.push({ cat: 'Loans', total: loanTotal });
   catTotals.sort((a, b) => b.total - a.total);
+
+  const fillColor = pct > 100 ? 'var(--red)' : pct > 85 ? 'var(--orange)' : 'var(--green)';
 
   root.innerHTML = `
   <div class="app">
     <header>
       <h1>Anna <span>Expense Tracker</span></h1>
-      <div class="month-nav">
-        <button id="prevMonth">&#8249;</button>
-        <span>${monthLabel}</span>
-        <button id="nextMonth">&#8250;</button>
+      <div class="header-right">
+        <span id="sync-badge" class="sync-badge ${syncStatus}">
+          ${syncStatus === 'synced' ? '● Synced' : syncStatus === 'error' ? '✕ Offline' : '↻ Syncing…'}
+        </span>
+        <div class="month-nav">
+          <button id="prevMonth">&#8249;</button>
+          <span>${monthLabel}</span>
+          <button id="nextMonth">&#8250;</button>
+        </div>
       </div>
     </header>
 
-    <!-- Summary -->
     <div class="summary-grid">
       <div class="card income">
         <div class="label">Net Salary</div>
@@ -474,15 +330,13 @@ function render() {
         <div class="sub">${pct}% of salary spent</div>
         <div class="progress-wrap">
           <div class="progress-bar">
-            <div class="progress-fill" style="width:${pct}%;background:${pct>100?'var(--red)':pct>85?'var(--orange)':'var(--green)'}"></div>
+            <div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Main grid -->
     <div class="main-grid">
-      <!-- Expense list -->
       <div>
         <div class="section-header">
           <h2>Expenses</h2>
@@ -490,7 +344,7 @@ function render() {
         </div>
 
         ${Object.entries(catMap).map(([cat, items]) => {
-          const catTotal = items.reduce((s, i) => s + i.amount, 0);
+          const catTotal = items.reduce((s, i) => s + Number(i.amount), 0);
           return `
           <div class="category-block">
             <div class="category-title">
@@ -512,7 +366,6 @@ function render() {
           </div>`;
         }).join('')}
 
-        <!-- Loans section -->
         <div class="category-block">
           <div class="category-title">
             <span>Loans (monthly installments)</span>
@@ -520,9 +373,7 @@ function render() {
           </div>
           ${state.loans.map(l => `
           <div class="expense-row">
-            <div>
-              <div class="expense-name">${l.name}</div>
-            </div>
+            <div><div class="expense-name">${l.name}</div></div>
             <div class="expense-amount">${fmt(l.monthly)}</div>
             <div style="display:flex;gap:4px">
               <button class="btn btn-ghost" style="font-size:.75rem;padding:4px 8px" data-edit-loan="${l.id}">Edit</button>
@@ -535,9 +386,7 @@ function render() {
         </div>
       </div>
 
-      <!-- Right panel -->
       <div class="right-panel">
-        <!-- Donut chart -->
         <div class="chart-wrap">
           <h2>Breakdown</h2>
           <div class="donut-container">
@@ -553,7 +402,7 @@ function render() {
               <div class="legend-dot" style="background:${CATEGORY_COLORS[i % CATEGORY_COLORS.length]}"></div>
               <span class="legend-name">${c.cat}</span>
               <span class="legend-val">${fmt(c.total)}</span>
-              <span class="legend-pct">${Math.round((c.total/grandTotal)*100)}%</span>
+              <span class="legend-pct">${grandTotal ? Math.round((c.total/grandTotal)*100) : 0}%</span>
             </div>`).join('')}
           </div>
         </div>
@@ -566,76 +415,72 @@ function render() {
 
 function buildDonut(catTotals, total) {
   if (total === 0) return '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#2e3250" stroke-width="3.5"/></svg>';
-  const r = 15.9;
-  const circ = 2 * Math.PI * r;
+  const r = 15.9, circ = 2 * Math.PI * r;
   let offset = 0;
-  const segments = catTotals.map((c, i) => {
+  const segs = catTotals.map((c, i) => {
     const pct = c.total / total;
-    const dash = pct * circ;
-    const gap  = circ - dash;
-    const seg  = `<circle cx="18" cy="18" r="${r}" fill="none"
-      stroke="${CATEGORY_COLORS[i % CATEGORY_COLORS.length]}"
-      stroke-width="3.5"
-      stroke-dasharray="${dash} ${gap}"
-      stroke-dashoffset="${-offset}"
+    const dash = pct * circ, gap = circ - dash;
+    const seg = `<circle cx="18" cy="18" r="${r}" fill="none"
+      stroke="${CATEGORY_COLORS[i % CATEGORY_COLORS.length]}" stroke-width="3.5"
+      stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offset}"
       transform="rotate(-90 18 18)"/>`;
     offset += dash;
     return seg;
   });
-  return `<svg viewBox="0 0 36 36" style="width:100%;height:auto">${segments.join('')}</svg>`;
+  return `<svg viewBox="0 0 36 36" style="width:100%;height:auto">${segs.join('')}</svg>`;
 }
 
-/* ── Event bindings ── */
+/* ── Events ── */
 function bindEvents() {
   document.getElementById('prevMonth')?.addEventListener('click', () => {
     state.currentMonth--;
     if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
-    saveState(); render();
+    saveLocal(); render();
   });
   document.getElementById('nextMonth')?.addEventListener('click', () => {
     state.currentMonth++;
     if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear++; }
-    saveState(); render();
+    saveLocal(); render();
   });
 
   document.getElementById('addExpenseBtn')?.addEventListener('click', () => openExpenseModal());
-  document.getElementById('addLoanBtn')?.addEventListener('click', () => openLoanModal());
+  document.getElementById('addLoanBtn')?.addEventListener('click',    () => openLoanModal());
   document.getElementById('editSalaryBtn')?.addEventListener('click', openSalaryModal);
 
   document.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = parseInt(btn.dataset.edit);
-      const e = getMonthExpenses().find(x => x.id === id);
+      const e  = getMonthExpenses().find(x => x.id === id);
       if (e) openExpenseModal(e);
     });
   });
   document.querySelectorAll('[data-delete]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = parseInt(btn.dataset.delete);
       if (!confirm('Remove this expense?')) return;
       state.expenses = state.expenses.filter(e => e.id !== id);
-      // also remove any overrides
       Object.keys(state.monthlyOverrides).forEach(k => {
         state.monthlyOverrides[k] = state.monthlyOverrides[k].filter(o => o.id !== id);
       });
-      saveState(); render();
+      saveLocal(); render();
       showToast('Expense removed', '#ef4444');
+      withSync(() => sb.from('anna_expenses').delete().eq('id', id));
     });
   });
   document.querySelectorAll('[data-edit-loan]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.dataset.editLoan;
-      const l = state.loans.find(x => x.id === id);
+      const l = state.loans.find(x => x.id === btn.dataset.editLoan);
       if (l) openLoanModal(l);
     });
   });
   document.querySelectorAll('[data-delete-loan]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.dataset.deleteLoan;
       if (!confirm('Remove this loan?')) return;
       state.loans = state.loans.filter(l => l.id !== id);
-      saveState(); render();
+      saveLocal(); render();
       showToast('Loan removed', '#ef4444');
+      withSync(() => sb.from('anna_loans').delete().eq('id', id));
     });
   });
 }
@@ -672,8 +517,8 @@ function openExpenseModal(expense = null) {
       </div>
       ${isEdit ? `
       <div class="form-group">
-        <label>
-          <input type="checkbox" id="m-thismonth" style="margin-right:6px" />
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="m-thismonth" />
           Override amount for <strong>${MONTH_NAMES[state.currentMonth]}</strong> only
         </label>
       </div>` : ''}
@@ -687,39 +532,62 @@ function openExpenseModal(expense = null) {
   overlay.querySelector('#m-cancel').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-  overlay.querySelector('#m-save').addEventListener('click', () => {
+  overlay.querySelector('#m-save').addEventListener('click', async () => {
     const name   = overlay.querySelector('#m-name').value.trim();
     const amount = parseFloat(overlay.querySelector('#m-amount').value);
     const cat    = overlay.querySelector('#m-cat').value;
     const note   = overlay.querySelector('#m-note').value.trim();
-    const thisMonthOnly = isEdit && overlay.querySelector('#m-thismonth')?.checked;
+    const monthOnly = isEdit && overlay.querySelector('#m-thismonth')?.checked;
 
-    if (!name || isNaN(amount) || amount < 0) {
-      alert('Please enter a valid name and amount.'); return;
-    }
+    if (!name || isNaN(amount) || amount < 0) { alert('Please enter a valid name and amount.'); return; }
+
+    const saveBtn = overlay.querySelector('#m-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '…';
 
     if (isEdit) {
-      if (thisMonthOnly) {
-        // store override for this month only
+      if (monthOnly) {
         const key = monthKey();
         if (!state.monthlyOverrides[key]) state.monthlyOverrides[key] = [];
-        const existing = state.monthlyOverrides[key].find(o => o.id === expense.id);
-        if (existing) existing.amount = amount;
-        else state.monthlyOverrides[key].push({ id: expense.id, amount });
-        // also update name/cat/note in base
+        const ov = state.monthlyOverrides[key].find(o => o.id === expense.id);
+        if (ov) ov.amount = amount; else state.monthlyOverrides[key].push({ id: expense.id, amount });
         const base = state.expenses.find(e => e.id === expense.id);
         if (base) { base.name = name; base.category = cat; base.note = note; }
+        saveLocal(); overlay.remove(); render();
+        showToast('Updated for this month');
+        withSync(async () => {
+          await sb.from('anna_expenses').update({ name, category: cat, note }).eq('id', expense.id);
+          await sb.from('anna_monthly_overrides').upsert(
+            { expense_id: expense.id, year: state.currentYear, month: state.currentMonth, amount },
+            { onConflict: 'expense_id,year,month' }
+          );
+        });
       } else {
         const base = state.expenses.find(e => e.id === expense.id);
         if (base) { base.name = name; base.amount = amount; base.category = cat; base.note = note; }
+        saveLocal(); overlay.remove(); render();
+        showToast('Expense updated');
+        withSync(() => sb.from('anna_expenses').update({ name, amount, category: cat, note }).eq('id', expense.id));
       }
-      showToast('Expense updated');
     } else {
-      state.expenses.push({ id: state.nextId++, name, category: cat, amount, note, recurring: true });
-      showToast('Expense added');
+      try {
+        setSyncStatus('syncing');
+        const { data, error } = await sb.from('anna_expenses')
+          .insert({ name, category: cat, amount, note, recurring: true })
+          .select().single();
+        if (error) throw error;
+        state.expenses.push(data);
+        saveLocal(); overlay.remove(); render();
+        showToast('Expense added');
+        setSyncStatus('synced');
+      } catch(e) {
+        console.error(e);
+        setSyncStatus('error');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Add';
+        showToast('Could not save — check connection', '#ef4444');
+      }
     }
-
-    saveState(); overlay.remove(); render();
   });
 
   overlay.querySelector('#m-name')?.focus();
@@ -747,26 +615,41 @@ function openLoanModal(loan = null) {
         <button class="btn btn-primary" id="l-save">${isEdit ? 'Save' : 'Add'}</button>
       </div>
     </div>`;
-
   document.body.appendChild(overlay);
   overlay.querySelector('#l-cancel').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-  overlay.querySelector('#l-save').addEventListener('click', () => {
+  overlay.querySelector('#l-save').addEventListener('click', async () => {
     const name   = overlay.querySelector('#l-name').value.trim();
-    const amount = parseFloat(overlay.querySelector('#l-amount').value);
-    if (!name || isNaN(amount) || amount < 0) {
-      alert('Please enter a valid name and amount.'); return;
-    }
+    const monthly = parseFloat(overlay.querySelector('#l-amount').value);
+    if (!name || isNaN(monthly) || monthly < 0) { alert('Please enter a valid name and amount.'); return; }
+
+    const saveBtn = overlay.querySelector('#l-save');
+    saveBtn.disabled = true; saveBtn.textContent = '…';
+
     if (isEdit) {
       const l = state.loans.find(x => x.id === loan.id);
-      if (l) { l.name = name; l.monthly = amount; }
+      if (l) { l.name = name; l.monthly = monthly; }
+      saveLocal(); overlay.remove(); render();
       showToast('Loan updated');
+      withSync(() => sb.from('anna_loans').update({ name, monthly }).eq('id', loan.id));
     } else {
-      state.loans.push({ id: 'L' + state.nextId++, name, monthly: amount });
-      showToast('Loan added');
+      const id = 'L' + Date.now();
+      try {
+        setSyncStatus('syncing');
+        const { error } = await sb.from('anna_loans').insert({ id, name, monthly });
+        if (error) throw error;
+        state.loans.push({ id, name, monthly });
+        saveLocal(); overlay.remove(); render();
+        showToast('Loan added');
+        setSyncStatus('synced');
+      } catch(e) {
+        console.error(e);
+        setSyncStatus('error');
+        saveBtn.disabled = false; saveBtn.textContent = 'Add';
+        showToast('Could not save — check connection', '#ef4444');
+      }
     }
-    saveState(); overlay.remove(); render();
   });
 }
 
@@ -792,14 +675,48 @@ function openSalaryModal() {
     const val = parseFloat(overlay.querySelector('#s-amount').value);
     if (isNaN(val) || val < 0) { alert('Enter a valid amount.'); return; }
     state.salary = val;
-    saveState(); overlay.remove(); render();
+    saveLocal(); overlay.remove(); render();
     showToast('Salary updated');
+    withSync(() => sb.from('anna_settings').upsert({ id: 1, salary: val }));
   });
   overlay.querySelector('#s-amount').select();
 }
 
 /* ── Boot ── */
-render();
+async function init() {
+  // Render from cache instantly
+  const cached = loadLocal();
+  if (cached?.expenses?.length) {
+    state = {
+      ...cached,
+      currentYear:  now.getFullYear(),
+      currentMonth: now.getMonth(),
+    };
+    render();
+  }
+
+  // Fetch live data from Supabase
+  try {
+    const remote = await fetchRemote();
+    state = {
+      ...state,
+      salary:           remote.salary,
+      expenses:         remote.expenses,
+      loans:            remote.loans,
+      monthlyOverrides: remote.monthlyOverrides,
+    };
+    saveLocal();
+    setSyncStatus('synced');
+  } catch(e) {
+    console.error('Supabase init failed:', e);
+    setSyncStatus('error');
+    showToast('Could not reach database — using local data', '#f97316');
+  }
+
+  render();
+}
+
+init();
 </script>
 </body>
 </html>
