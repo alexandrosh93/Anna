@@ -10,6 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Anna" />
   <meta name="theme-color" content="#6c63ff" />
+  <link rel="manifest" href="./manifest.json" />
 
   <script>
   // Generate icon via Canvas — runs before anything else
@@ -105,32 +106,12 @@
       fav.href   = makeIcon(32);
       document.head.appendChild(fav);
 
-      // Apple touch icon (used by iPhone Add to Home Screen)
+      // Apple touch icon (used by iPhone / Safari Mac Add to Home Screen)
       const ati  = document.createElement('link');
       ati.rel    = 'apple-touch-icon';
       ati.sizes  = '180x180';
       ati.href   = icon180;
       document.head.appendChild(ati);
-
-      // PWA manifest (needed for Android + Chrome install prompt)
-      const manifest = {
-        name: 'Anna — Expense Tracker',
-        short_name: 'Anna',
-        description: 'Personal monthly expense & budget tracker',
-        start_url: './',
-        display: 'standalone',
-        background_color: '#0f1117',
-        theme_color: '#6c63ff',
-        icons: [
-          { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
-        ]
-      };
-      const blob  = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-      const mlink = document.createElement('link');
-      mlink.rel   = 'manifest';
-      mlink.href  = URL.createObjectURL(blob);
-      document.head.appendChild(mlink);
     }
 
     if (document.readyState === 'loading') {
@@ -170,6 +151,19 @@
     /* smooth theme transition */
     body, .card, .modal, .chart-wrap, .year-card, .year-table-wrap,
     .tabs, .period-nav, .overlay { transition: background .2s, border-color .2s, color .2s; }
+
+    /* install button */
+    .install-btn {
+      display: none;
+      align-items: center; gap: 5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; border: none; border-radius: 8px;
+      padding: 6px 12px; font-size: .78rem; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+      transition: opacity .15s;
+    }
+    .install-btn:hover { opacity: .88; }
+    .install-btn.visible { display: flex; }
 
     /* theme toggle button */
     .theme-btn {
@@ -732,6 +726,7 @@ function renderYear() {
 /* ── Shared header + tabs ── */
 function renderHeader() {
   const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  const standalone = window.matchMedia('(display-mode: standalone)').matches;
   return `
   <header>
     <h1>Anna <span>Expense Tracker</span></h1>
@@ -739,6 +734,7 @@ function renderHeader() {
       <span id="sync-badge" class="sync-badge ${state.syncStatus}">
         ${{ synced:'● Synced', syncing:'↻ Syncing…', error:'✕ Offline' }[state.syncStatus]}
       </span>
+      ${!standalone ? `<button class="install-btn ${window._installReady ? 'visible' : ''}" id="install-btn" title="Install app">⬇ Add to Home</button>` : ''}
       <button class="theme-btn" id="theme-btn" title="Toggle light/dark mode">
         ${theme === 'dark' ? '☀️' : '🌙'}
       </button>
@@ -772,6 +768,19 @@ function buildDonut(catTotals, total) {
 
 /* ── Event binding ── */
 function bindEvents() {
+  /* install */
+  document.getElementById('install-btn')?.addEventListener('click', async () => {
+    if (window._installPrompt) {
+      window._installPrompt.prompt();
+      const { outcome } = await window._installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        window._installReady = false;
+        window._installPrompt = null;
+        document.getElementById('install-btn')?.classList.remove('visible');
+      }
+    }
+  });
+
   /* theme toggle */
   document.getElementById('theme-btn')?.addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -1086,6 +1095,33 @@ async function init() {
 }
 
 init();
+</script>
+
+<!-- Service worker + install prompt (non-module, runs globally) -->
+<script>
+  // Register service worker (enables PWA install on Chrome/Edge Mac & Windows)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+
+  // Capture install prompt (Chrome/Edge only — Safari handles it via Share menu)
+  window._installReady  = false;
+  window._installPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    window._installPrompt = e;
+    window._installReady  = true;
+    const btn = document.getElementById('install-btn');
+    if (btn) btn.classList.add('visible');
+  });
+
+  window.addEventListener('appinstalled', () => {
+    window._installReady  = false;
+    window._installPrompt = null;
+    const btn = document.getElementById('install-btn');
+    if (btn) btn.classList.remove('visible');
+  });
 </script>
 </body>
 </html>

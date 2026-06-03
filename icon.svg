@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3730a3"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="43%" r="42%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="180" height="180" rx="40" ry="40" fill="url(#bg)"/>
+
+  <!-- Glow -->
+  <ellipse cx="90" cy="78" rx="72" ry="72" fill="url(#glow)"/>
+
+  <!-- Euro sign -->
+  <text x="90" y="86"
+    font-family="Arial, Helvetica, sans-serif"
+    font-weight="bold"
+    font-size="92"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    fill="white">€</text>
+
+  <!-- Mini bars (income / expense categories) -->
+  <rect x="33"  y="120" width="17" height="20" rx="4" fill="#4ade80"/>
+  <rect x="56"  y="125" width="17" height="15" rx="4" fill="#a78bfa"/>
+  <rect x="79"  y="129" width="17" height="11" rx="4" fill="#f97316"/>
+  <rect x="102" y="132" width="17" height="8"  rx="4" fill="#f87171"/>
+
+  <!-- ANNA pill -->
+  <rect x="18" y="149" width="144" height="24" rx="12" fill="black" fill-opacity="0.30"/>
+
+  <!-- ANNA text -->
+  <text x="90" y="161"
+    font-family="Arial, Helvetica, sans-serif"
+    font-weight="800"
+    font-size="15"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    fill="white"
+    letter-spacing="3">ANNA</text>
+</svg>
