@@ -4,6 +4,135 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Anna — Expense Tracker</title>
+
+  <!-- PWA / iPhone home screen -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Anna" />
+  <meta name="theme-color" content="#6c63ff" />
+
+  <script>
+  // Generate icon via Canvas — runs before anything else
+  (function () {
+    function roundedRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y,     x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x,     y + h, r);
+      ctx.arcTo(x,     y + h, x,     y,     r);
+      ctx.arcTo(x,     y,     x + w, y,     r);
+      ctx.closePath();
+    }
+
+    function makeIcon(size) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const S = size;
+
+      // ── Background: deep indigo → violet gradient ──
+      const bg = ctx.createLinearGradient(0, 0, S, S);
+      bg.addColorStop(0, '#3730a3');
+      bg.addColorStop(1, '#7c3aed');
+      roundedRect(ctx, 0, 0, S, S, S * 0.22);
+      ctx.fillStyle = bg;
+      ctx.fill();
+
+      // ── Soft glow behind euro sign ──
+      const glow = ctx.createRadialGradient(S * .5, S * .43, 0, S * .5, S * .43, S * .38);
+      glow.addColorStop(0, 'rgba(255,255,255,0.18)');
+      glow.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(S * .5, S * .43, S * .38, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ── Euro symbol ──
+      ctx.shadowColor  = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur   = S * 0.06;
+      ctx.shadowOffsetY = S * 0.02;
+      ctx.fillStyle    = '#ffffff';
+      ctx.font         = `bold ${Math.round(S * .54)}px Arial, sans-serif`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('€', S * .5, S * .43);
+      ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+      // ── Mini bar chart at the bottom (income / expenses visual) ──
+      const bars  = [
+        { h: S * .17, color: '#4ade80' },   // green  – income
+        { h: S * .12, color: '#a78bfa' },   // purple – housing
+        { h: S * .08, color: '#f97316' },   // orange – health
+        { h: S * .05, color: '#f87171' },   // red    – other
+      ];
+      const bw    = S * 0.11;
+      const gap   = S * 0.04;
+      const totalW = bars.length * bw + (bars.length - 1) * gap;
+      const baseY = S * 0.83;
+      let bx = (S - totalW) / 2;
+
+      bars.forEach(({ h, color }) => {
+        roundedRect(ctx, bx, baseY - h, bw, h, bw * 0.28);
+        ctx.fillStyle = color;
+        ctx.fill();
+        bx += bw + gap;
+      });
+
+      // ── Subtle "ANNA" label at the very bottom ──
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.font      = `600 ${Math.round(S * .085)}px Arial, sans-serif`;
+      ctx.fillText('ANNA', S * .5, S * .92);
+
+      return c.toDataURL('image/png');
+    }
+
+    function setup() {
+      const icon180 = makeIcon(180);
+      const icon192 = makeIcon(192);
+      const icon512 = makeIcon(512);
+
+      // Favicon
+      const fav  = document.createElement('link');
+      fav.rel    = 'icon';
+      fav.type   = 'image/png';
+      fav.href   = makeIcon(32);
+      document.head.appendChild(fav);
+
+      // Apple touch icon (used by iPhone Add to Home Screen)
+      const ati  = document.createElement('link');
+      ati.rel    = 'apple-touch-icon';
+      ati.sizes  = '180x180';
+      ati.href   = icon180;
+      document.head.appendChild(ati);
+
+      // PWA manifest (needed for Android + Chrome install prompt)
+      const manifest = {
+        name: 'Anna — Expense Tracker',
+        short_name: 'Anna',
+        description: 'Personal monthly expense & budget tracker',
+        start_url: './',
+        display: 'standalone',
+        background_color: '#0f1117',
+        theme_color: '#6c63ff',
+        icons: [
+          { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        ]
+      };
+      const blob  = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const mlink = document.createElement('link');
+      mlink.rel   = 'manifest';
+      mlink.href  = URL.createObjectURL(blob);
+      document.head.appendChild(mlink);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setup);
+    } else {
+      setup();
+    }
+  })();
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
