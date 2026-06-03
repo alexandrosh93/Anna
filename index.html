@@ -58,17 +58,17 @@
       ctx.fillText('€', S * .5, S * .43);
       ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-      // ── Mini bar chart at the bottom (income / expenses visual) ──
+      // ── Mini bar chart ──
       const bars  = [
-        { h: S * .17, color: '#4ade80' },   // green  – income
-        { h: S * .12, color: '#a78bfa' },   // purple – housing
-        { h: S * .08, color: '#f97316' },   // orange – health
-        { h: S * .05, color: '#f87171' },   // red    – other
+        { h: S * .13, color: '#4ade80' },
+        { h: S * .09, color: '#a78bfa' },
+        { h: S * .06, color: '#f97316' },
+        { h: S * .04, color: '#f87171' },
       ];
-      const bw    = S * 0.11;
-      const gap   = S * 0.04;
+      const bw     = S * 0.10;
+      const gap    = S * 0.035;
       const totalW = bars.length * bw + (bars.length - 1) * gap;
-      const baseY = S * 0.83;
+      const baseY  = S * 0.72;
       let bx = (S - totalW) / 2;
 
       bars.forEach(({ h, color }) => {
@@ -78,10 +78,17 @@
         bx += bw + gap;
       });
 
-      // ── Subtle "ANNA" label at the very bottom ──
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.font      = `600 ${Math.round(S * .085)}px Arial, sans-serif`;
-      ctx.fillText('ANNA', S * .5, S * .92);
+      // ── "ANNA" label — bold, prominent, pill background ──
+      const labelY  = S * 0.875;
+      const labelH  = S * 0.155;
+      roundedRect(ctx, S * 0.12, labelY - labelH * 0.68, S * 0.76, labelH, labelH * 0.5);
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font      = `800 ${Math.round(S * .155)}px Arial, sans-serif`;
+      ctx.letterSpacing = `${S * 0.012}px`;
+      ctx.fillText('ANNA', S * .5, labelY);
 
       return c.toDataURL('image/png');
     }
@@ -150,6 +157,28 @@
       --muted:    #94a3b8;
       --radius:   12px;
     }
+
+    [data-theme="light"] {
+      --bg:       #f0f2f8;
+      --surface:  #ffffff;
+      --surface2: #f5f7fc;
+      --border:   #dde1ee;
+      --text:     #1a1d2e;
+      --muted:    #6b7280;
+    }
+
+    /* smooth theme transition */
+    body, .card, .modal, .chart-wrap, .year-card, .year-table-wrap,
+    .tabs, .period-nav, .overlay { transition: background .2s, border-color .2s, color .2s; }
+
+    /* theme toggle button */
+    .theme-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 6px 10px;
+      cursor: pointer; font-size: 1rem; line-height: 1;
+      transition: border-color .15s, background .2s;
+    }
+    .theme-btn:hover { border-color: var(--accent2); }
 
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
     .app { max-width: 1120px; margin: 0 auto; padding: 24px 16px 60px; }
@@ -312,6 +341,16 @@ const COLORS = ['#6c63ff','#a78bfa','#22c55e','#eab308','#f97316','#ef4444','#06
 const CATEGORIES = ['Housing','Utilities','Insurance','Health','Personal Care','Groceries','Leisure','Installments','Transport','Other'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ── Theme ── */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('anna_theme', t);
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+}
+const savedTheme = localStorage.getItem('anna_theme') || 'dark';
+applyTheme(savedTheme);
 
 /* ── State ── */
 const today = new Date();
@@ -692,6 +731,7 @@ function renderYear() {
 
 /* ── Shared header + tabs ── */
 function renderHeader() {
+  const theme = document.documentElement.getAttribute('data-theme') || 'dark';
   return `
   <header>
     <h1>Anna <span>Expense Tracker</span></h1>
@@ -699,6 +739,9 @@ function renderHeader() {
       <span id="sync-badge" class="sync-badge ${state.syncStatus}">
         ${{ synced:'● Synced', syncing:'↻ Syncing…', error:'✕ Offline' }[state.syncStatus]}
       </span>
+      <button class="theme-btn" id="theme-btn" title="Toggle light/dark mode">
+        ${theme === 'dark' ? '☀️' : '🌙'}
+      </button>
     </div>
   </header>`;
 }
@@ -729,6 +772,13 @@ function buildDonut(catTotals, total) {
 
 /* ── Event binding ── */
 function bindEvents() {
+  /* theme toggle */
+  document.getElementById('theme-btn')?.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+    document.getElementById('theme-btn').textContent = cur === 'dark' ? '🌙' : '☀️';
+  });
+
   /* tabs */
   document.getElementById('tabMonthly')?.addEventListener('click', () => {
     state.activeTab = 'monthly'; render();
