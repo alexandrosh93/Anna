@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anna — Monthly Expense Tracker</title>
+  <title>Anna — Expense Tracker</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -23,36 +23,38 @@
     }
 
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .app { max-width: 1120px; margin: 0 auto; padding: 24px 16px 60px; }
 
-    .app { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
-
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
-    }
-    header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.5px; }
+    /* ── Header ── */
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    header h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -.5px; }
     header h1 span { color: var(--accent2); }
     .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-    .sync-badge { font-size: .72rem; padding: 4px 10px; border-radius: 99px; font-weight: 600; transition: all .3s; }
+    .sync-badge { font-size: .72rem; padding: 4px 10px; border-radius: 99px; font-weight: 600; }
     .sync-badge.synced  { background: rgba(34,197,94,.15);  color: var(--green); }
     .sync-badge.syncing { background: rgba(108,99,255,.15); color: var(--accent2); }
     .sync-badge.error   { background: rgba(239,68,68,.15);  color: var(--red); }
 
-    .month-nav {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 6px 14px;
-    }
-    .month-nav button { background: none; border: none; color: var(--accent2); font-size: 1.1rem; cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: background .15s; }
-    .month-nav button:hover { background: var(--surface2); }
-    .month-nav span { font-weight: 600; min-width: 130px; text-align: center; }
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; margin-bottom: 28px; width: fit-content; }
+    .tab { border: none; background: none; color: var(--muted); font-size: .85rem; font-weight: 600; padding: 7px 18px; border-radius: 8px; cursor: pointer; transition: all .15s; }
+    .tab.active { background: var(--accent); color: #fff; }
+    .tab:not(.active):hover { color: var(--text); background: var(--surface2); }
 
-    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    /* ── Nav bar (month / year) ── */
+    .nav-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+    .period-nav { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 14px; }
+    .period-nav button { background: none; border: none; color: var(--accent2); font-size: 1.1rem; cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: background .15s; }
+    .period-nav button:hover { background: var(--surface2); }
+    .period-nav span { font-weight: 600; min-width: 140px; text-align: center; }
+
+    /* ── Summary cards ── */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 28px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-    .card .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
-    .card .value { font-size: 1.7rem; font-weight: 700; }
-    .card .sub   { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+    .card .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+    .card .value { font-size: 1.65rem; font-weight: 700; }
+    .card .sub   { font-size: .78rem; color: var(--muted); margin-top: 4px; }
     .card.income .value { color: var(--green); }
     .card.spent  .value { color: var(--orange); }
     .card.left.negative .value { color: var(--red); }
@@ -60,79 +62,107 @@
     .progress-bar  { height: 6px; border-radius: 99px; background: var(--surface2); overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 99px; transition: width .4s; }
 
-    .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+    /* ── Main grid (monthly tab) ── */
+    .main-grid { display: grid; grid-template-columns: 1fr 330px; gap: 24px; align-items: start; }
     @media (max-width: 820px) { .main-grid { grid-template-columns: 1fr; } }
 
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .section-header h2 { font-size: 1rem; font-weight: 600; }
+    .section-header h2 { font-size: .95rem; font-weight: 600; }
+    .section-actions { display: flex; gap: 8px; }
 
-    .btn { border: none; cursor: pointer; border-radius: 8px; font-size: .85rem; font-weight: 600; padding: 7px 14px; transition: opacity .15s, transform .1s; }
+    .btn { border: none; cursor: pointer; border-radius: 8px; font-size: .82rem; font-weight: 600; padding: 7px 14px; transition: opacity .15s, transform .1s; }
     .btn:active { transform: scale(.97); }
-    .btn:disabled { opacity: .5; cursor: default; }
+    .btn:disabled { opacity: .45; cursor: default; }
     .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover:not(:disabled) { opacity: .88; }
+    .btn-primary:hover:not(:disabled) { opacity: .87; }
     .btn-ghost  { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-ghost:hover { border-color: var(--accent); }
-    .btn-danger { background: transparent; color: var(--red); border: 1px solid transparent; font-size: .8rem; padding: 4px 8px; }
-    .btn-danger:hover { border-color: var(--red); }
+    .btn-ghost:hover { border-color: var(--accent2); }
+    .btn-sm { padding: 4px 9px; font-size: .75rem; }
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid transparent; font-size: .78rem; padding: 4px 7px; }
+    .btn-danger:hover { border-color: var(--red); background: rgba(239,68,68,.07); }
 
-    .category-block { margin-bottom: 16px; }
-    .category-title {
-      font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
-      padding: 6px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
-      display: flex; justify-content: space-between;
-    }
+    .category-block { margin-bottom: 14px; }
+    .category-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 5px 4px; border-bottom: 1px solid var(--border); margin-bottom: 6px; display: flex; justify-content: space-between; }
     .category-total { color: var(--text); font-weight: 600; }
 
-    .expense-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; transition: background .12s; }
+    .expense-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; transition: background .12s; }
     .expense-row:hover { background: var(--surface2); }
-    .expense-name   { font-size: .9rem; }
-    .expense-note   { font-size: .72rem; color: var(--muted); }
-    .expense-amount { font-weight: 600; font-size: .9rem; text-align: right; white-space: nowrap; }
+    .expense-name   { font-size: .88rem; }
+    .expense-note   { font-size: .7rem; color: var(--muted); }
+    .expense-amount { font-weight: 600; font-size: .88rem; text-align: right; white-space: nowrap; }
 
-    /* Empty state */
-    .empty-state {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 48px 24px; text-align: center; border: 1px dashed var(--border);
-      border-radius: var(--radius); color: var(--muted); gap: 12px;
-    }
-    .empty-state .empty-icon { font-size: 2.5rem; }
-    .empty-state p { font-size: .9rem; line-height: 1.5; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 44px 20px; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--muted); gap: 10px; }
+    .empty-state .ei { font-size: 2.2rem; }
+    .empty-state p { font-size: .88rem; line-height: 1.55; }
 
-    .right-panel { display: flex; flex-direction: column; gap: 20px; }
-
-    .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-    .chart-wrap h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
-    .donut-container { position: relative; width: 180px; margin: 0 auto 16px; }
+    /* ── Right panel ── */
+    .right-panel { display: flex; flex-direction: column; gap: 18px; }
+    .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .chart-wrap h2 { font-size: .95rem; font-weight: 600; margin-bottom: 14px; }
+    .donut-container { position: relative; width: 160px; margin: 0 auto 14px; }
     .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-    .donut-center .dc-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; }
-    .donut-center .dc-value { font-size: 1.2rem; font-weight: 700; }
-    .legend { display: flex; flex-direction: column; gap: 8px; }
-    .legend-row { display: flex; align-items: center; gap: 10px; font-size: .82rem; }
-    .legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .donut-center .dc-label { font-size: .62rem; color: var(--muted); text-transform: uppercase; }
+    .donut-center .dc-value { font-size: 1.1rem; font-weight: 700; }
+    .legend { display: flex; flex-direction: column; gap: 7px; }
+    .legend-row { display: flex; align-items: center; gap: 9px; font-size: .8rem; }
+    .legend-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
     .legend-name { flex: 1; color: var(--muted); }
     .legend-val  { font-weight: 600; }
-    .legend-pct  { color: var(--muted); font-size: .75rem; min-width: 36px; text-align: right; }
+    .legend-pct  { color: var(--muted); font-size: .72rem; min-width: 32px; text-align: right; }
 
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; }
-    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
-    .form-group input,
-    .form-group select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 12px; font-size: .9rem; outline: none; transition: border-color .15s; }
+    /* ── Year overview ── */
+    .year-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    @media (max-width: 720px) { .year-grid { grid-template-columns: 1fr; } }
+
+    .year-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .year-card h2 { font-size: .95rem; font-weight: 600; margin-bottom: 18px; }
+
+    /* bar chart */
+    .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+    .bar-row { display: grid; grid-template-columns: 68px 1fr 80px; align-items: center; gap: 10px; font-size: .78rem; }
+    .bar-row .month-lbl { color: var(--muted); text-align: right; white-space: nowrap; cursor: pointer; }
+    .bar-row .month-lbl:hover { color: var(--accent2); }
+    .bar-row .month-lbl.cur { color: var(--accent2); font-weight: 700; }
+    .bar-track { height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 99px; transition: width .4s; }
+    .bar-val   { font-weight: 600; font-size: .75rem; text-align: right; }
+
+    /* year table */
+    .year-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; }
+    .year-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .year-table th { padding: 10px 14px; text-align: right; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
+    .year-table th:first-child { text-align: left; }
+    .year-table td { padding: 10px 14px; text-align: right; border-bottom: 1px solid var(--border); }
+    .year-table td:first-child { text-align: left; font-weight: 600; }
+    .year-table tr:last-child td { border-bottom: none; }
+    .year-table tbody tr { cursor: pointer; transition: background .12s; }
+    .year-table tbody tr:hover { background: var(--surface2); }
+    .year-table tbody tr.cur-month { background: rgba(108,99,255,.12); }
+    .year-table tbody tr.cur-month td:first-child::after { content: ' ●'; color: var(--accent2); font-size: .65rem; }
+    .year-table tfoot td { font-weight: 700; background: var(--surface2); border-top: 1px solid var(--border); }
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+    .year-table tfoot .label-cell { color: var(--muted); font-size: .75rem; }
+
+    /* ── Modals ── */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 26px; width: 100%; max-width: 430px; max-height: 92vh; overflow-y: auto; }
+    .modal h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 5px; }
+    .form-group input, .form-group select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 12px; font-size: .88rem; outline: none; transition: border-color .15s; }
     .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
     .salary-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
     .salary-row:hover .edit-icon { opacity: 1; }
-    .edit-icon { opacity: 0; font-size: .85rem; color: var(--accent2); transition: opacity .15s; }
+    .edit-icon { opacity: 0; font-size: .8rem; color: var(--accent2); transition: opacity .15s; }
 
-    .toast { position: fixed; bottom: 28px; right: 24px; color: #fff; padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: .85rem; z-index: 200; animation: slideUp .25s ease; }
-    @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .toast { position: fixed; bottom: 28px; right: 24px; color: #fff; padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: .83rem; z-index: 200; animation: slideUp .22s ease; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--surface); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
   </style>
@@ -148,39 +178,45 @@ const sb = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94anlweXhwYXV0b3dnb21xbHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzY5NDEsImV4cCI6MjA5NjAxMjk0MX0.0zh0qw9F_TIuZlPncc9tMBa81A7hJaq_E2ZXBwZQJ9s'
 );
 
-const CATEGORY_COLORS = [
-  '#6c63ff','#a78bfa','#22c55e','#eab308','#f97316',
-  '#ef4444','#06b6d4','#ec4899','#84cc16','#f59e0b'
-];
-const CATEGORIES = [
-  'Housing','Utilities','Insurance','Health','Personal Care',
-  'Groceries','Leisure','Installments','Transport','Other'
-];
-const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December'
-];
+/* ── Constants ── */
+const COLORS = ['#6c63ff','#a78bfa','#22c55e','#eab308','#f97316','#ef4444','#06b6d4','#ec4899','#84cc16','#f59e0b'];
+const CATEGORIES = ['Housing','Utilities','Insurance','Health','Personal Care','Groceries','Leisure','Installments','Transport','Other'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-const now = new Date();
+/* ── State ── */
+const today = new Date();
 let state = {
-  salary: 0,
-  currentYear:  now.getFullYear(),
-  currentMonth: now.getMonth(),
-  expenses: [],
-  loans: [],
-  monthlyOverrides: {},
+  salary:       0,
+  currentYear:  today.getFullYear(),
+  currentMonth: today.getMonth(),
+  activeTab:    'monthly',   // 'monthly' | 'year'
+  expenses:     [],          // current month only
+  loans:        [],          // recurring every month
+  yearData:     null,        // { monthTotals: number[12] } – year overview cache
+  syncStatus:   'syncing',
 };
-let syncStatus = 'syncing';
 
-function saveLocal() { localStorage.setItem('anna_v3', JSON.stringify(state)); }
-function loadLocal()  { try { const r = localStorage.getItem('anna_v3'); return r ? JSON.parse(r) : null; } catch { return null; } }
+/* ── Local cache ── */
+function saveLocal() {
+  const { yearData, ...rest } = state;
+  localStorage.setItem('anna_v4', JSON.stringify(rest));
+}
+function loadLocal() {
+  try { const r = localStorage.getItem('anna_v4'); return r ? JSON.parse(r) : null; } catch { return null; }
+}
 
+/* ── Helpers ── */
+const fmt      = n => '€' + Number(n).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const loanSum  = () => state.loans.reduce((s, l) => s + Number(l.monthly), 0);
+
+/* ── Sync badge ── */
 function setSyncStatus(s) {
-  syncStatus = s;
-  const badge = document.getElementById('sync-badge');
-  if (!badge) return;
-  badge.className = 'sync-badge ' + s;
-  badge.textContent = { synced: '● Synced', syncing: '↻ Syncing…', error: '✕ Offline' }[s] || s;
+  state.syncStatus = s;
+  const el = document.getElementById('sync-badge');
+  if (!el) return;
+  el.className = 'sync-badge ' + s;
+  el.textContent = { synced: '● Synced', syncing: '↻ Syncing…', error: '✕ Offline' }[s] || s;
 }
 
 async function withSync(fn) {
@@ -189,48 +225,55 @@ async function withSync(fn) {
   catch(e) { console.error(e); setSyncStatus('error'); showToast('Saved locally — sync failed', '#f97316'); }
 }
 
-async function fetchRemote() {
-  const [expRes, settRes, loanRes, ovRes] = await Promise.all([
-    sb.from('anna_expenses').select('*').order('id'),
+/* ── Supabase fetchers ── */
+async function fetchMonth(year, month) {
+  const [expRes, settRes, loanRes] = await Promise.all([
+    sb.from('anna_expenses').select('*').eq('year', year).eq('month', month).order('id'),
     sb.from('anna_settings').select('*').eq('id', 1).single(),
     sb.from('anna_loans').select('*').order('id'),
-    sb.from('anna_monthly_overrides').select('*'),
   ]);
   if (expRes.error) throw expRes.error;
-  const monthlyOverrides = {};
-  (ovRes.data || []).forEach(o => {
-    const key = `${o.year}-${o.month}`;
-    if (!monthlyOverrides[key]) monthlyOverrides[key] = [];
-    monthlyOverrides[key].push({ id: o.expense_id, amount: o.amount });
-  });
   return {
     salary:   settRes.data?.salary ?? 0,
     expenses: expRes.data || [],
     loans:    loanRes.data || [],
-    monthlyOverrides,
   };
 }
 
-const fmt      = n => '€' + Number(n).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const monthKey = () => `${state.currentYear}-${state.currentMonth}`;
-
-function getMonthExpenses() {
-  const overrides = state.monthlyOverrides[monthKey()] || [];
-  return state.expenses.map(e => {
-    const ov = overrides.find(o => o.id === e.id);
-    return ov ? { ...e, amount: ov.amount } : { ...e };
-  });
+async function fetchYearData(year) {
+  const { data, error } = await sb
+    .from('anna_expenses')
+    .select('month, amount')
+    .eq('year', year);
+  if (error) throw error;
+  const totals = Array(12).fill(0);
+  (data || []).forEach(e => { totals[e.month] += Number(e.amount); });
+  return totals;
 }
 
-function getCategories(expenses) {
-  const map = {};
-  expenses.forEach(e => { if (!map[e.category]) map[e.category] = []; map[e.category].push(e); });
-  return map;
+/* ── Copy from previous month ── */
+async function copyFromPrevious() {
+  let pYear = state.currentYear, pMonth = state.currentMonth - 1;
+  if (pMonth < 0) { pMonth = 11; pYear--; }
+  setSyncStatus('syncing');
+  try {
+    const { data, error } = await sb
+      .from('anna_expenses').select('*').eq('year', pYear).eq('month', pMonth);
+    if (error) throw error;
+    if (!data?.length) { showToast(`No expenses in ${MONTHS[pMonth]}`, '#f97316'); setSyncStatus('synced'); return; }
+    const rows = data.map(({ id, created_at, ...rest }) => ({ ...rest, year: state.currentYear, month: state.currentMonth }));
+    const { data: inserted, error: err2 } = await sb.from('anna_expenses').insert(rows).select();
+    if (err2) throw err2;
+    state.expenses = [...state.expenses, ...inserted];
+    saveLocal(); render();
+    showToast(`Copied ${inserted.length} expenses from ${MONTHS[pMonth]}`);
+    setSyncStatus('synced');
+  } catch(e) { console.error(e); setSyncStatus('error'); showToast('Copy failed', '#ef4444'); }
 }
 
+/* ── Render ── */
 const root = document.getElementById('root');
 let toastTimer = null;
-
 function showToast(msg, color = '#22c55e') {
   document.querySelector('.toast')?.remove();
   const t = document.createElement('div');
@@ -241,39 +284,43 @@ function showToast(msg, color = '#22c55e') {
 }
 
 function render() {
-  const expenses   = getMonthExpenses();
-  const catMap     = getCategories(expenses);
-  const expTotal   = expenses.reduce((s, e) => s + Number(e.amount), 0);
-  const loanTotal  = state.loans.reduce((s, l) => s + Number(l.monthly), 0);
-  const grandTotal = expTotal + loanTotal;
+  root.innerHTML = state.activeTab === 'monthly' ? renderMonthly() : renderYear();
+  bindEvents();
+}
+
+/* ── Monthly view ── */
+function renderMonthly() {
+  const expTotal   = state.expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const loans      = loanSum();
+  const grandTotal = expTotal + loans;
   const left       = state.salary - grandTotal;
   const pct        = state.salary > 0 ? Math.min(100, Math.round((grandTotal / state.salary) * 100)) : 0;
   const fillColor  = pct > 100 ? 'var(--red)' : pct > 85 ? 'var(--orange)' : 'var(--green)';
-  const monthLabel = MONTH_NAMES[state.currentMonth] + ' ' + state.currentYear;
+  const monthLabel = MONTHS[state.currentMonth] + ' ' + state.currentYear;
 
-  const catTotals = Object.entries(catMap).map(([cat, items]) => ({
-    cat, total: items.reduce((s, i) => s + Number(i.amount), 0)
-  }));
-  if (loanTotal > 0) catTotals.push({ cat: 'Loans', total: loanTotal });
+  const catMap = {};
+  state.expenses.forEach(e => { if (!catMap[e.category]) catMap[e.category] = []; catMap[e.category].push(e); });
+
+  const catTotals = Object.entries(catMap).map(([cat, items]) => ({ cat, total: items.reduce((s, i) => s + Number(i.amount), 0) }));
+  if (loans > 0) catTotals.push({ cat: 'Loans', total: loans });
   catTotals.sort((a, b) => b.total - a.total);
 
-  const hasData = expenses.length > 0 || state.loans.length > 0;
+  const hasExpenses = state.expenses.length > 0;
+  const hasLoans    = state.loans.length > 0;
 
-  root.innerHTML = `
+  return `
   <div class="app">
-    <header>
-      <h1>Anna <span>Expense Tracker</span></h1>
-      <div class="header-right">
-        <span id="sync-badge" class="sync-badge ${syncStatus}">
-          ${{ synced:'● Synced', syncing:'↻ Syncing…', error:'✕ Offline' }[syncStatus]}
-        </span>
-        <div class="month-nav">
-          <button id="prevMonth">&#8249;</button>
-          <span>${monthLabel}</span>
-          <button id="nextMonth">&#8250;</button>
-        </div>
+    ${renderHeader()}
+    ${renderTabs()}
+
+    <div class="nav-bar">
+      <div class="period-nav">
+        <button id="prevMonth">&#8249;</button>
+        <span>${monthLabel}</span>
+        <button id="nextMonth">&#8250;</button>
       </div>
-    </header>
+      ${hasExpenses ? '' : `<button class="btn btn-ghost btn-sm" id="copyPrevBtn">↩ Copy from ${MONTHS[state.currentMonth === 0 ? 11 : state.currentMonth - 1]}</button>`}
+    </div>
 
     <div class="summary-grid">
       <div class="card income">
@@ -282,46 +329,45 @@ function render() {
           <div class="value">${fmt(state.salary)}</div>
           <span class="edit-icon">✏️</span>
         </div>
-        <div class="sub">${state.salary === 0 ? 'Click to set your salary' : 'Monthly take-home'}</div>
+        <div class="sub">${state.salary === 0 ? 'Click to set salary' : 'Monthly take-home'}</div>
       </div>
       <div class="card spent">
-        <div class="label">Total Expenses</div>
+        <div class="label">Expenses</div>
         <div class="value">${fmt(grandTotal)}</div>
-        <div class="sub">${loanTotal > 0 ? `incl. ${fmt(loanTotal)} loans` : 'across all categories'}</div>
+        <div class="sub">${loans > 0 ? `incl. ${fmt(loans)} loans` : 'this month'}</div>
       </div>
       <div class="card left ${left < 0 ? 'negative' : ''}">
         <div class="label">Remaining</div>
         <div class="value">${fmt(left)}</div>
         <div class="sub">${state.salary > 0 ? pct + '% of salary spent' : 'Set salary to see %'}</div>
         <div class="progress-wrap">
-          <div class="progress-bar">
-            <div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div>
-          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div></div>
         </div>
       </div>
     </div>
 
     <div class="main-grid">
+      <!-- Left: expense list -->
       <div>
         <div class="section-header">
-          <h2>Expenses</h2>
-          <button class="btn btn-primary" id="addExpenseBtn">+ Add Expense</button>
+          <h2>Expenses — ${monthLabel}</h2>
+          <div class="section-actions">
+            ${hasExpenses ? `<button class="btn btn-ghost btn-sm" id="copyPrevBtn">↩ Copy prev month</button>` : ''}
+            <button class="btn btn-primary" id="addExpenseBtn">+ Add</button>
+          </div>
         </div>
 
-        ${!hasData ? `
+        ${!hasExpenses && !hasLoans ? `
         <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <p>No expenses yet.<br>Click <strong>+ Add Expense</strong> to get started.</p>
+          <div class="ei">📋</div>
+          <p>No expenses for ${MONTHS[state.currentMonth]}.<br>Click <strong>+ Add</strong> or copy from a previous month.</p>
         </div>` : ''}
 
         ${Object.entries(catMap).map(([cat, items]) => {
           const catTotal = items.reduce((s, i) => s + Number(i.amount), 0);
           return `
           <div class="category-block">
-            <div class="category-title">
-              <span>${cat}</span>
-              <span class="category-total">${fmt(catTotal)}</span>
-            </div>
+            <div class="category-title"><span>${cat}</span><span class="category-total">${fmt(catTotal)}</span></div>
             ${items.map(e => `
             <div class="expense-row">
               <div>
@@ -330,25 +376,23 @@ function render() {
               </div>
               <div class="expense-amount">${fmt(e.amount)}</div>
               <div style="display:flex;gap:4px">
-                <button class="btn btn-ghost" style="font-size:.75rem;padding:4px 8px" data-edit="${e.id}">Edit</button>
+                <button class="btn btn-ghost btn-sm" data-edit="${e.id}">Edit</button>
                 <button class="btn btn-danger" data-delete="${e.id}">✕</button>
               </div>
             </div>`).join('')}
           </div>`;
         }).join('')}
 
-        <div class="category-block" style="${!hasData ? 'margin-top:16px' : ''}">
-          ${state.loans.length > 0 ? `
-          <div class="category-title">
-            <span>Loans</span>
-            <span class="category-total">${fmt(loanTotal)}</span>
-          </div>
+        <!-- Loans -->
+        <div class="category-block" style="margin-top:8px">
+          ${hasLoans ? `
+          <div class="category-title"><span>Loans (recurring)</span><span class="category-total">${fmt(loans)}</span></div>
           ${state.loans.map(l => `
           <div class="expense-row">
             <div><div class="expense-name">${l.name}</div></div>
             <div class="expense-amount">${fmt(l.monthly)}</div>
             <div style="display:flex;gap:4px">
-              <button class="btn btn-ghost" style="font-size:.75rem;padding:4px 8px" data-edit-loan="${l.id}">Edit</button>
+              <button class="btn btn-ghost btn-sm" data-edit-loan="${l.id}">Edit</button>
               <button class="btn btn-danger" data-delete-loan="${l.id}">✕</button>
             </div>
           </div>`).join('')}` : ''}
@@ -358,12 +402,13 @@ function render() {
         </div>
       </div>
 
+      <!-- Right: chart -->
       <div class="right-panel">
         <div class="chart-wrap">
           <h2>Breakdown</h2>
           ${grandTotal === 0 ? `
-          <div class="empty-state" style="border:none;padding:24px 0">
-            <div class="empty-icon">📊</div>
+          <div class="empty-state" style="border:none;padding:16px 0">
+            <div class="ei">📊</div>
             <p>Chart appears once you add expenses.</p>
           </div>` : `
           <div class="donut-container">
@@ -376,7 +421,7 @@ function render() {
           <div class="legend">
             ${catTotals.map((c, i) => `
             <div class="legend-row">
-              <div class="legend-dot" style="background:${CATEGORY_COLORS[i % CATEGORY_COLORS.length]}"></div>
+              <div class="legend-dot" style="background:${COLORS[i % COLORS.length]}"></div>
               <span class="legend-name">${c.cat}</span>
               <span class="legend-val">${fmt(c.total)}</span>
               <span class="legend-pct">${Math.round((c.total / grandTotal) * 100)}%</span>
@@ -386,17 +431,165 @@ function render() {
       </div>
     </div>
   </div>`;
-
-  bindEvents();
 }
 
+/* ── Year view ── */
+function renderYear() {
+  const loans      = loanSum();
+  const monthTotals = state.yearData || Array(12).fill(0);
+  const maxBar     = Math.max(...monthTotals.map(t => t + loans), state.salary || 1, 1);
+  const yearTotal  = monthTotals.reduce((s, t) => s + t, 0);
+  const yearLoans  = loans * 12;
+  const yearGrand  = yearTotal + yearLoans;
+  const yearLeft   = (state.salary * 12) - yearGrand;
+
+  const thisYear   = today.getFullYear();
+  const thisMon    = today.getMonth();
+
+  return `
+  <div class="app">
+    ${renderHeader()}
+    ${renderTabs()}
+
+    <div class="nav-bar">
+      <div class="period-nav">
+        <button id="prevYear">&#8249;</button>
+        <span>${state.currentYear}</span>
+        <button id="nextYear">&#8250;</button>
+      </div>
+    </div>
+
+    <!-- Year summary cards -->
+    <div class="summary-grid" style="margin-bottom:28px">
+      <div class="card income">
+        <div class="label">Annual Salary</div>
+        <div class="value">${fmt(state.salary * 12)}</div>
+        <div class="sub">${fmt(state.salary)} / month</div>
+      </div>
+      <div class="card spent">
+        <div class="label">Year Expenses</div>
+        <div class="value">${fmt(yearGrand)}</div>
+        <div class="sub">incl. ${fmt(yearLoans)} loans</div>
+      </div>
+      <div class="card left ${yearLeft < 0 ? 'negative' : ''}">
+        <div class="label">Year Remaining</div>
+        <div class="value">${fmt(yearLeft)}</div>
+        <div class="sub">avg ${fmt(yearGrand / 12)} / month spent</div>
+      </div>
+    </div>
+
+    <!-- Bar chart + table side by side -->
+    <div class="year-grid">
+      <div class="year-card">
+        <h2>Monthly Expenses</h2>
+        <div class="bar-chart">
+          ${MONTHS_SHORT.map((name, i) => {
+            const total    = monthTotals[i] + loans;
+            const barPct   = Math.min(100, (total / maxBar) * 100);
+            const isCur    = i === thisMon && state.currentYear === thisYear;
+            const remaining = state.salary - total;
+            const color    = remaining < 0 ? 'var(--red)' : isCur ? 'var(--accent2)' : 'var(--accent)';
+            return `
+            <div class="bar-row">
+              <div class="month-lbl ${isCur ? 'cur' : ''}" data-goto-month="${i}">${name}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${barPct}%;background:${color}"></div></div>
+              <div class="bar-val">${fmt(total)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="year-card">
+        <h2>Remaining by Month</h2>
+        <div class="bar-chart">
+          ${MONTHS_SHORT.map((name, i) => {
+            const remaining = state.salary - monthTotals[i] - loans;
+            const absMax    = Math.max(state.salary, 1);
+            const barPct    = Math.min(100, (Math.abs(remaining) / absMax) * 100);
+            const isCur     = i === thisMon && state.currentYear === thisYear;
+            const color     = remaining < 0 ? 'var(--red)' : 'var(--green)';
+            return `
+            <div class="bar-row">
+              <div class="month-lbl ${isCur ? 'cur' : ''}" data-goto-month="${i}">${name}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${barPct}%;background:${color}"></div></div>
+              <div class="bar-val ${remaining < 0 ? 'negative' : 'positive'}">${fmt(remaining)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly table -->
+    <div class="year-table-wrap">
+      <table class="year-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Expenses</th>
+            <th>Loans</th>
+            <th>Total</th>
+            <th>Remaining</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${MONTHS.map((name, i) => {
+            const exp   = monthTotals[i];
+            const total = exp + loans;
+            const rem   = state.salary - total;
+            const isCur = i === thisMon && state.currentYear === thisYear;
+            return `
+            <tr class="${isCur ? 'cur-month' : ''}" data-goto-month="${i}">
+              <td>${name}</td>
+              <td>${fmt(exp)}</td>
+              <td>${fmt(loans)}</td>
+              <td>${fmt(total)}</td>
+              <td class="${rem < 0 ? 'negative' : 'positive'}">${fmt(rem)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td class="label-cell">Full Year</td>
+            <td>${fmt(yearTotal)}</td>
+            <td>${fmt(yearLoans)}</td>
+            <td>${fmt(yearGrand)}</td>
+            <td class="${yearLeft < 0 ? 'negative' : 'positive'}">${fmt(yearLeft)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* ── Shared header + tabs ── */
+function renderHeader() {
+  return `
+  <header>
+    <h1>Anna <span>Expense Tracker</span></h1>
+    <div class="header-right">
+      <span id="sync-badge" class="sync-badge ${state.syncStatus}">
+        ${{ synced:'● Synced', syncing:'↻ Syncing…', error:'✕ Offline' }[state.syncStatus]}
+      </span>
+    </div>
+  </header>`;
+}
+
+function renderTabs() {
+  return `
+  <div class="tabs">
+    <button class="tab ${state.activeTab === 'monthly' ? 'active' : ''}" id="tabMonthly">Monthly</button>
+    <button class="tab ${state.activeTab === 'year'    ? 'active' : ''}" id="tabYear">Year Overview</button>
+  </div>`;
+}
+
+/* ── Donut ── */
 function buildDonut(catTotals, total) {
   const r = 15.9, circ = 2 * Math.PI * r;
   let offset = 0;
   const segs = catTotals.map((c, i) => {
     const dash = (c.total / total) * circ, gap = circ - dash;
     const seg = `<circle cx="18" cy="18" r="${r}" fill="none"
-      stroke="${CATEGORY_COLORS[i % CATEGORY_COLORS.length]}" stroke-width="3.5"
+      stroke="${COLORS[i % COLORS.length]}" stroke-width="3.5"
       stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offset}"
       transform="rotate(-90 18 18)"/>`;
     offset += dash;
@@ -405,25 +598,70 @@ function buildDonut(catTotals, total) {
   return `<svg viewBox="0 0 36 36" style="width:100%;height:auto">${segs.join('')}</svg>`;
 }
 
+/* ── Event binding ── */
 function bindEvents() {
-  document.getElementById('prevMonth')?.addEventListener('click', () => {
+  /* tabs */
+  document.getElementById('tabMonthly')?.addEventListener('click', () => {
+    state.activeTab = 'monthly'; render();
+  });
+  document.getElementById('tabYear')?.addEventListener('click', async () => {
+    state.activeTab = 'year';
+    render();
+    if (!state.yearData) await refreshYearData();
+  });
+
+  /* month nav */
+  document.getElementById('prevMonth')?.addEventListener('click', async () => {
     state.currentMonth--;
     if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
-    saveLocal(); render();
+    state.expenses = [];
+    render();
+    await refreshMonth();
   });
-  document.getElementById('nextMonth')?.addEventListener('click', () => {
+  document.getElementById('nextMonth')?.addEventListener('click', async () => {
     state.currentMonth++;
     if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear++; }
-    saveLocal(); render();
+    state.expenses = [];
+    render();
+    await refreshMonth();
   });
 
-  document.getElementById('addExpenseBtn')?.addEventListener('click', () => openExpenseModal());
-  document.getElementById('addLoanBtn')?.addEventListener('click',    () => openLoanModal());
+  /* year nav */
+  document.getElementById('prevYear')?.addEventListener('click', async () => {
+    state.currentYear--;
+    state.yearData = null;
+    render();
+    await refreshYearData();
+  });
+  document.getElementById('nextYear')?.addEventListener('click', async () => {
+    state.currentYear++;
+    state.yearData = null;
+    render();
+    await refreshYearData();
+  });
+
+  /* click month in year view → go to monthly tab for that month */
+  document.querySelectorAll('[data-goto-month]').forEach(el => {
+    el.addEventListener('click', async () => {
+      state.currentMonth = parseInt(el.dataset.gotoMonth);
+      state.activeTab = 'monthly';
+      state.expenses = [];
+      render();
+      await refreshMonth();
+    });
+  });
+
+  /* salary */
   document.getElementById('editSalaryBtn')?.addEventListener('click', openSalaryModal);
 
+  /* copy prev */
+  document.getElementById('copyPrevBtn')?.addEventListener('click', copyFromPrevious);
+
+  /* expense actions */
+  document.getElementById('addExpenseBtn')?.addEventListener('click', () => openExpenseModal());
   document.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const e = getMonthExpenses().find(x => x.id === parseInt(btn.dataset.edit));
+      const e = state.expenses.find(x => x.id === parseInt(btn.dataset.edit));
       if (e) openExpenseModal(e);
     });
   });
@@ -432,14 +670,14 @@ function bindEvents() {
       const id = parseInt(btn.dataset.delete);
       if (!confirm('Remove this expense?')) return;
       state.expenses = state.expenses.filter(e => e.id !== id);
-      Object.keys(state.monthlyOverrides).forEach(k => {
-        state.monthlyOverrides[k] = state.monthlyOverrides[k].filter(o => o.id !== id);
-      });
       saveLocal(); render();
-      showToast('Expense removed', '#ef4444');
+      showToast('Removed', '#ef4444');
       withSync(() => sb.from('anna_expenses').delete().eq('id', id));
     });
   });
+
+  /* loan actions */
+  document.getElementById('addLoanBtn')?.addEventListener('click', () => openLoanModal());
   document.querySelectorAll('[data-edit-loan]').forEach(btn => {
     btn.addEventListener('click', () => {
       const l = state.loans.find(x => x.id === btn.dataset.editLoan);
@@ -458,13 +696,45 @@ function bindEvents() {
   });
 }
 
+/* ── Data refresh ── */
+async function refreshMonth() {
+  setSyncStatus('syncing');
+  try {
+    const remote = await fetchMonth(state.currentYear, state.currentMonth);
+    state.salary   = remote.salary;
+    state.expenses = remote.expenses;
+    state.loans    = remote.loans;
+    saveLocal();
+    setSyncStatus('synced');
+  } catch(e) {
+    console.error(e);
+    setSyncStatus('error');
+    showToast('Could not load month data', '#f97316');
+  }
+  render();
+}
+
+async function refreshYearData() {
+  setSyncStatus('syncing');
+  try {
+    state.yearData = await fetchYearData(state.currentYear);
+    setSyncStatus('synced');
+  } catch(e) {
+    console.error(e);
+    setSyncStatus('error');
+    state.yearData = Array(12).fill(0);
+  }
+  render();
+}
+
+/* ── Modals ── */
 function openExpenseModal(expense = null) {
   const isEdit = !!expense;
   const overlay = document.createElement('div');
   overlay.className = 'overlay';
   overlay.innerHTML = `
     <div class="modal">
-      <h3>${isEdit ? 'Edit Expense' : 'New Expense'}</h3>
+      <h3>${isEdit ? 'Edit Expense' : `New Expense — ${MONTHS[state.currentMonth]}`}</h3>
       <div class="form-row">
         <div class="form-group">
           <label>Name</label>
@@ -487,13 +757,6 @@ function openExpenseModal(expense = null) {
           <input id="m-note" type="text" value="${isEdit ? (expense.note||'') : ''}" placeholder="Details…" />
         </div>
       </div>
-      ${isEdit ? `
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" id="m-thismonth" />
-          Override amount for <strong>${MONTH_NAMES[state.currentMonth]}</strong> only
-        </label>
-      </div>` : ''}
       <div class="modal-actions">
         <button class="btn btn-ghost" id="m-cancel">Cancel</button>
         <button class="btn btn-primary" id="m-save">${isEdit ? 'Save' : 'Add'}</button>
@@ -505,11 +768,10 @@ function openExpenseModal(expense = null) {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
   overlay.querySelector('#m-save').addEventListener('click', async () => {
-    const name      = overlay.querySelector('#m-name').value.trim();
-    const amount    = parseFloat(overlay.querySelector('#m-amount').value);
-    const cat       = overlay.querySelector('#m-cat').value;
-    const note      = overlay.querySelector('#m-note').value.trim();
-    const monthOnly = isEdit && overlay.querySelector('#m-thismonth')?.checked;
+    const name   = overlay.querySelector('#m-name').value.trim();
+    const amount = parseFloat(overlay.querySelector('#m-amount').value);
+    const cat    = overlay.querySelector('#m-cat').value;
+    const note   = overlay.querySelector('#m-note').value.trim();
 
     if (!name || isNaN(amount) || amount < 0) { alert('Please enter a valid name and amount.'); return; }
 
@@ -517,34 +779,16 @@ function openExpenseModal(expense = null) {
     saveBtn.disabled = true; saveBtn.textContent = '…';
 
     if (isEdit) {
-      if (monthOnly) {
-        const key = monthKey();
-        if (!state.monthlyOverrides[key]) state.monthlyOverrides[key] = [];
-        const ov = state.monthlyOverrides[key].find(o => o.id === expense.id);
-        if (ov) ov.amount = amount; else state.monthlyOverrides[key].push({ id: expense.id, amount });
-        const base = state.expenses.find(e => e.id === expense.id);
-        if (base) { base.name = name; base.category = cat; base.note = note; }
-        saveLocal(); overlay.remove(); render();
-        showToast('Updated for this month');
-        withSync(async () => {
-          await sb.from('anna_expenses').update({ name, category: cat, note }).eq('id', expense.id);
-          await sb.from('anna_monthly_overrides').upsert(
-            { expense_id: expense.id, year: state.currentYear, month: state.currentMonth, amount },
-            { onConflict: 'expense_id,year,month' }
-          );
-        });
-      } else {
-        const base = state.expenses.find(e => e.id === expense.id);
-        if (base) { base.name = name; base.amount = amount; base.category = cat; base.note = note; }
-        saveLocal(); overlay.remove(); render();
-        showToast('Expense updated');
-        withSync(() => sb.from('anna_expenses').update({ name, amount, category: cat, note }).eq('id', expense.id));
-      }
+      const base = state.expenses.find(e => e.id === expense.id);
+      if (base) { base.name = name; base.amount = amount; base.category = cat; base.note = note; }
+      saveLocal(); overlay.remove(); render();
+      showToast('Expense updated');
+      withSync(() => sb.from('anna_expenses').update({ name, amount, category: cat, note }).eq('id', expense.id));
     } else {
       try {
         setSyncStatus('syncing');
         const { data, error } = await sb.from('anna_expenses')
-          .insert({ name, category: cat, amount, note, recurring: true })
+          .insert({ name, category: cat, amount, note, year: state.currentYear, month: state.currentMonth })
           .select().single();
         if (error) throw error;
         state.expenses.push(data);
@@ -552,8 +796,7 @@ function openExpenseModal(expense = null) {
         showToast('Expense added');
         setSyncStatus('synced');
       } catch(e) {
-        console.error(e);
-        setSyncStatus('error');
+        console.error(e); setSyncStatus('error');
         saveBtn.disabled = false; saveBtn.textContent = 'Add';
         showToast('Could not save — check connection', '#ef4444');
       }
@@ -570,16 +813,8 @@ function openLoanModal(loan = null) {
   overlay.innerHTML = `
     <div class="modal">
       <h3>${isEdit ? 'Edit Loan' : 'New Loan'}</h3>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Loan Name</label>
-          <input id="l-name" type="text" value="${isEdit ? loan.name : ''}" placeholder="e.g. Car Loan" />
-        </div>
-        <div class="form-group">
-          <label>Monthly Installment (€)</label>
-          <input id="l-amount" type="number" step="0.01" min="0" value="${isEdit ? loan.monthly : ''}" placeholder="0.00" />
-        </div>
-      </div>
+      <div class="form-group"><label>Loan Name</label><input id="l-name" type="text" value="${isEdit ? loan.name : ''}" placeholder="e.g. Car Loan" /></div>
+      <div class="form-group"><label>Monthly Installment (€)</label><input id="l-amount" type="number" step="0.01" min="0" value="${isEdit ? loan.monthly : ''}" placeholder="0.00" /></div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="l-cancel">Cancel</button>
         <button class="btn btn-primary" id="l-save">${isEdit ? 'Save' : 'Add'}</button>
@@ -593,10 +828,8 @@ function openLoanModal(loan = null) {
     const name    = overlay.querySelector('#l-name').value.trim();
     const monthly = parseFloat(overlay.querySelector('#l-amount').value);
     if (!name || isNaN(monthly) || monthly < 0) { alert('Please enter a valid name and amount.'); return; }
-
     const saveBtn = overlay.querySelector('#l-save');
     saveBtn.disabled = true; saveBtn.textContent = '…';
-
     if (isEdit) {
       const l = state.loans.find(x => x.id === loan.id);
       if (l) { l.name = name; l.monthly = monthly; }
@@ -614,8 +847,7 @@ function openLoanModal(loan = null) {
         showToast('Loan added');
         setSyncStatus('synced');
       } catch(e) {
-        console.error(e);
-        setSyncStatus('error');
+        console.error(e); setSyncStatus('error');
         saveBtn.disabled = false; saveBtn.textContent = 'Add';
         showToast('Could not save — check connection', '#ef4444');
       }
@@ -652,21 +884,24 @@ function openSalaryModal() {
   overlay.querySelector('#s-amount').select();
 }
 
+/* ── Boot ── */
 async function init() {
   const cached = loadLocal();
-  if (cached?.expenses?.length) {
-    state = { ...cached, currentYear: now.getFullYear(), currentMonth: now.getMonth() };
+  if (cached) {
+    state = { ...state, ...cached, activeTab: 'monthly', yearData: null };
     render();
   }
   try {
-    const remote = await fetchRemote();
-    state = { ...state, salary: remote.salary, expenses: remote.expenses, loans: remote.loans, monthlyOverrides: remote.monthlyOverrides };
+    const remote = await fetchMonth(state.currentYear, state.currentMonth);
+    state.salary   = remote.salary;
+    state.expenses = remote.expenses;
+    state.loans    = remote.loans;
     saveLocal();
     setSyncStatus('synced');
   } catch(e) {
     console.error(e);
     setSyncStatus('error');
-    showToast('Could not reach database — using local data', '#f97316');
+    showToast('Could not reach database', '#f97316');
   }
   render();
 }
