@@ -349,6 +349,23 @@
     .key-btn:active { background: #6c63ff; transform: scale(.93); }
     .key-btn.empty  { background: transparent; border: none; cursor: default; }
     .key-btn.del    { font-size: 1.1rem; }
+    .faceid-btn {
+      margin-top: 20px; display: flex; flex-direction: column; align-items: center;
+      gap: 6px; background: none; border: none; cursor: pointer; color: #6c63ff;
+      font-size: .78rem; font-weight: 600; letter-spacing: .5px;
+    }
+    .faceid-btn svg { width: 44px; height: 44px; }
+    .faceid-btn:active { opacity: .6; }
+    .faceid-offer {
+      margin-top: 22px; padding: 10px 18px; border-radius: 12px;
+      background: #1a1d27; border: 1px solid #2e3250;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      font-size: .8rem; color: #94a3b8; text-align: center;
+    }
+    .faceid-offer button {
+      padding: 7px 20px; border-radius: 8px; border: none;
+      background: #6c63ff; color: #fff; font-size: .82rem; font-weight: 700; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -1148,34 +1165,65 @@ async function init() {
 
 /* ── Lock screen ── */
 const PIN = '1993';
+const CREDS_OK = typeof PasswordCredential !== 'undefined';
+
+function biometricEnabled() { return localStorage.getItem('anna_face') === '1'; }
+
+async function tryFaceID(onSuccess, onFail) {
+  try {
+    const cred = await navigator.credentials.get({ password: true, mediation: 'optional' });
+    if (cred && cred.password === PIN) { onSuccess(); } else { onFail(); }
+  } catch(e) { onFail(); }
+}
+
+async function saveFaceID() {
+  try {
+    const cred = new PasswordCredential({ id: 'anna-user', password: PIN, name: 'Anna — Expense Tracker' });
+    await navigator.credentials.store(cred);
+    localStorage.setItem('anna_face', '1');
+  } catch(e) { console.warn('Could not save Face ID credential', e); }
+}
+
+const FACEID_SVG = `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="10" height="3" rx="1.5" fill="#6c63ff"/>
+  <rect x="2" y="2" width="3" height="10" rx="1.5" fill="#6c63ff"/>
+  <rect x="32" y="2" width="10" height="3" rx="1.5" fill="#6c63ff"/>
+  <rect x="39" y="2" width="3" height="10" rx="1.5" fill="#6c63ff"/>
+  <rect x="2" y="39" width="10" height="3" rx="1.5" fill="#6c63ff"/>
+  <rect x="2" y="32" width="3" height="10" rx="1.5" fill="#6c63ff"/>
+  <rect x="32" y="39" width="10" height="3" rx="1.5" fill="#6c63ff"/>
+  <rect x="39" y="32" width="3" height="10" rx="1.5" fill="#6c63ff"/>
+  <circle cx="16" cy="18" r="2" fill="#6c63ff"/>
+  <circle cx="28" cy="18" r="2" fill="#6c63ff"/>
+  <line x1="22" y1="16" x2="22" y2="21" stroke="#6c63ff" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M14 28 Q22 34 30 28" stroke="#6c63ff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+</svg>`;
 
 function showLock() {
   let entered = '';
+  const showFace = CREDS_OK && biometricEnabled();
 
   const el = document.createElement('div');
   el.id = 'lock-screen';
   el.innerHTML = `
     <div class="lock-icon">€</div>
     <div class="lock-title">ANNA</div>
-    <div class="lock-sub">Enter PIN to continue</div>
+    <div class="lock-sub" id="lock-sub">${showFace ? 'Face ID or enter PIN' : 'Enter PIN to continue'}</div>
     <div class="pin-dots" id="pin-dots">
-      <div class="pin-dot"></div>
-      <div class="pin-dot"></div>
-      <div class="pin-dot"></div>
-      <div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
     </div>
     <div class="pin-error" id="pin-error"></div>
     <div class="keypad">
       ${[1,2,3,4,5,6,7,8,9,'','0','⌫'].map(k => `
         <button class="key-btn ${k==='' ? 'empty' : k==='⌫' ? 'del' : ''}"
           data-key="${k}">${k}</button>`).join('')}
-    </div>`;
+    </div>
+    ${showFace ? `<button class="faceid-btn" id="faceid-btn">${FACEID_SVG}Face ID</button>` : ''}`;
   document.body.appendChild(el);
 
   function updateDots() {
-    document.querySelectorAll('.pin-dot').forEach((d, i) => {
-      d.classList.toggle('filled', i < entered.length);
-    });
+    document.querySelectorAll('.pin-dot').forEach((d, i) => d.classList.toggle('filled', i < entered.length));
   }
 
   function wrong() {
@@ -1183,11 +1231,44 @@ function showLock() {
     err.textContent = 'Incorrect PIN';
     el.style.animation = 'shake .35s';
     setTimeout(() => { el.style.animation = ''; err.textContent = ''; }, 700);
-    entered = '';
-    updateDots();
+    entered = ''; updateDots();
+  }
+
+  function unlock() {
+    sessionStorage.setItem('anna_ok', '1');
+    el.remove();
+    init();
+  }
+
+  function pinSuccess() {
+    if (CREDS_OK && !biometricEnabled()) {
+      // Offer to enable Face ID
+      const offer = document.createElement('div');
+      offer.className = 'faceid-offer';
+      offer.innerHTML = `${FACEID_SVG}<span>Enable Face ID for faster access?</span>
+        <div style="display:flex;gap:10px">
+          <button id="face-yes">Enable</button>
+          <button id="face-no" style="background:#2e3250">Not now</button>
+        </div>`;
+      el.appendChild(offer);
+      document.getElementById('face-yes').addEventListener('click', async () => {
+        await saveFaceID();
+        unlock();
+      });
+      document.getElementById('face-no').addEventListener('click', unlock);
+    } else {
+      unlock();
+    }
   }
 
   el.addEventListener('click', e => {
+    if (e.target.closest('#faceid-btn')) {
+      tryFaceID(unlock, () => {
+        document.getElementById('pin-error').textContent = 'Face ID failed — use PIN';
+        setTimeout(() => { document.getElementById('pin-error').textContent = ''; }, 2000);
+      });
+      return;
+    }
     const btn = e.target.closest('.key-btn');
     if (!btn || btn.classList.contains('empty')) return;
     const k = btn.dataset.key;
@@ -1196,19 +1277,18 @@ function showLock() {
     } else if (entered.length < 4) {
       entered += k;
       if (entered.length === 4) {
-        if (entered === PIN) {
-          sessionStorage.setItem('anna_ok', '1');
-          el.remove();
-          init();
-        } else {
-          wrong();
-        }
+        if (entered === PIN) { pinSuccess(); } else { wrong(); }
         return;
       }
     }
     updateDots();
     document.getElementById('pin-error').textContent = '';
   });
+
+  // Auto-trigger Face ID on load if enabled
+  if (showFace) {
+    setTimeout(() => tryFaceID(unlock, () => {}), 300);
+  }
 }
 
 // Add shake keyframe
