@@ -1,0 +1,19 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 8 */3 * *'   # every 3 days at 08:00 UTC
+  workflow_dispatch:          # allow manual trigger from GitHub UI
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping anna_settings
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://oxjypyxpautowgomqlrm.supabase.co/rest/v1/anna_settings?limit=1" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94anlweXhwYXV0b3dnb21xbHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzY5NDEsImV4cCI6MjA5NjAxMjk0MX0.0zh0qw9F_TIuZlPncc9tMBa81A7hJaq_E2ZXBwZQJ9s" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94anlweXhwYXV0b3dnb21xbHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzY5NDEsImV4cCI6MjA5NjAxMjk0MX0.0zh0qw9F_TIuZlPncc9tMBa81A7hJaq_E2ZXBwZQJ9s")
+          echo "Supabase ping status: $STATUS"
+          [ "$STATUS" = "200" ] && echo "OK" || echo "WARNING: unexpected status $STATUS"
