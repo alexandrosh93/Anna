@@ -404,10 +404,14 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-const sb = createClient(
-  'https://oxjypyxpautowgomqlrm.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94anlweXhwYXV0b3dnb21xbHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzY5NDEsImV4cCI6MjA5NjAxMjk0MX0.0zh0qw9F_TIuZlPncc9tMBa81A7hJaq_E2ZXBwZQJ9s'
-);
+/* ── Config (stored in localStorage after first-run setup) ── */
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem('anna_cfg') || 'null'); } catch { return null; }
+}
+function saveConfig(cfg) { localStorage.setItem('anna_cfg', JSON.stringify(cfg)); }
+
+let sb;
+function initSupabase(url, key) { sb = createClient(url, key); }
 
 /* ── Constants ── */
 const COLORS = ['#6c63ff','#a78bfa','#22c55e','#eab308','#f97316','#ef4444','#06b6d4','#ec4899','#84cc16','#f59e0b'];
@@ -1228,10 +1232,72 @@ async function init() {
   render();
 }
 
-/* ── Lock screen ── */
-const PIN = '1993';
+/* ── First-run setup screen ── */
+function showSetup() {
+  const el = document.createElement('div');
+  el.id = 'lock-screen';
+  el.innerHTML = `
+    <div class="lock-icon">€</div>
+    <div class="lock-title">ANNA</div>
+    <div class="lock-sub" style="margin-bottom:24px">One-time setup</div>
+    <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;padding:0 24px">
+      <div>
+        <div style="font-size:.7rem;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Supabase Project URL</div>
+        <input id="cfg-url" type="url" placeholder="https://xxxx.supabase.co"
+          style="width:100%;background:#1a1d27;border:1px solid #2e3250;color:#e2e8f0;border-radius:10px;padding:10px 14px;font-size:15px;outline:none"/>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Supabase Anon Key</div>
+        <input id="cfg-key" type="text" placeholder="eyJhbGci..."
+          style="width:100%;background:#1a1d27;border:1px solid #2e3250;color:#e2e8f0;border-radius:10px;padding:10px 14px;font-size:15px;outline:none"/>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Choose a 4-digit PIN</div>
+        <input id="cfg-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••"
+          style="width:100%;background:#1a1d27;border:1px solid #2e3250;color:#e2e8f0;border-radius:10px;padding:10px 14px;font-size:15px;outline:none;letter-spacing:.3em"/>
+      </div>
+      <div id="cfg-err" style="color:#ef4444;font-size:.78rem;min-height:18px;text-align:center"></div>
+      <button id="cfg-save"
+        style="background:#6c63ff;color:#fff;border:none;border-radius:10px;padding:12px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:4px">
+        Save &amp; Open App
+      </button>
+      <div style="font-size:.68rem;color:#64748b;text-align:center;line-height:1.5">
+        Your credentials are stored only on this device.<br>Run the SQL from supabase-setup.sql in your Supabase project first.
+      </div>
+    </div>`;
+  document.body.appendChild(el);
 
-function showLock() {
+  document.getElementById('cfg-save').addEventListener('click', async () => {
+    const url = document.getElementById('cfg-url').value.trim().replace(/\/$/, '');
+    const key = document.getElementById('cfg-key').value.trim();
+    const pin = document.getElementById('cfg-pin').value.trim();
+    const err = document.getElementById('cfg-err');
+
+    if (!url.startsWith('https://') || !url.includes('supabase.co')) { err.textContent = 'Enter a valid Supabase URL'; return; }
+    if (key.length < 40) { err.textContent = 'Anon key looks too short'; return; }
+    if (!/^\d{4}$/.test(pin)) { err.textContent = 'PIN must be exactly 4 digits'; return; }
+
+    err.textContent = 'Testing connection…';
+    try {
+      const test = await fetch(`${url}/rest/v1/anna_settings?limit=1`, {
+        headers: { apikey: key, Authorization: `Bearer ${key}` }
+      });
+      if (!test.ok) throw new Error(test.status);
+    } catch(e) {
+      err.textContent = 'Could not connect — check URL and key, and run the SQL setup first.';
+      return;
+    }
+
+    saveConfig({ url, key, pin });
+    el.remove();
+    initSupabase(url, key);
+    sessionStorage.setItem('anna_ok', '1');
+    init();
+  });
+}
+
+/* ── Lock screen ── */
+function showLock(PIN) {
   let entered = '';
 
   const el = document.createElement('div');
@@ -1298,11 +1364,17 @@ const ks = document.createElement('style');
 ks.textContent = `@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-10px)} 40%,80%{transform:translateX(10px)} }`;
 document.head.appendChild(ks);
 
-// Start
-if (sessionStorage.getItem('anna_ok') === '1') {
-  init();
+// Boot
+const _cfg = loadConfig();
+if (!_cfg) {
+  showSetup();
 } else {
-  showLock();
+  initSupabase(_cfg.url, _cfg.key);
+  if (sessionStorage.getItem('anna_ok') === '1') {
+    init();
+  } else {
+    showLock(_cfg.pin);
+  }
 }
 </script>
 
