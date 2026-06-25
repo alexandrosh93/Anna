@@ -358,7 +358,20 @@
     .salary-row:hover .edit-icon { opacity: 1; }
     .edit-icon { opacity: 0; font-size: .8rem; color: var(--accent2); transition: opacity .15s; }
 
-    .toast { position: fixed; bottom: 28px; right: 24px; color: #fff; padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: .83rem; z-index: 200; animation: slideUp .22s ease; }
+    .toast { position: fixed; bottom: 96px; right: 24px; color: #fff; padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: .83rem; z-index: 200; animation: slideUp .22s ease; }
+
+    /* ── Floating action button ── */
+    .fab {
+      position: fixed; bottom: 28px; right: 24px; z-index: 150;
+      width: 58px; height: 58px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-size: 2rem; line-height: 1;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 20px rgba(108,99,255,.45);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .fab:active { transform: scale(.92); box-shadow: 0 3px 10px rgba(108,99,255,.35); }
     @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
     ::-webkit-scrollbar { width: 5px; }
@@ -569,6 +582,14 @@ function showToast(msg, color = '#22c55e') {
 
 function render() {
   root.innerHTML = state.activeTab === 'monthly' ? renderMonthly() : renderYear();
+  // FAB — create once, keep across renders
+  if (!document.getElementById('fab')) {
+    const fab = document.createElement('button');
+    fab.id = 'fab'; fab.className = 'fab'; fab.title = 'Add expense';
+    fab.textContent = '+';
+    fab.addEventListener('click', () => openExpenseModal());
+    document.body.appendChild(fab);
+  }
   bindEvents();
 }
 
