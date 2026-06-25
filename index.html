@@ -451,6 +451,7 @@ let state = {
   activeTab:    'monthly',   // 'monthly' | 'year'
   expenses:     [],          // current month only
   loans:        [],          // recurring every month
+  planned:      [],          // future/planned expenses
   yearData:     null,        // { monthTotals: number[12] } – year overview cache
   syncStatus:   'syncing',
 };
@@ -485,16 +486,18 @@ async function withSync(fn) {
 
 /* ── Supabase fetchers ── */
 async function fetchMonth(year, month) {
-  const [expRes, settRes, loanRes] = await Promise.all([
+  const [expRes, settRes, loanRes, planRes] = await Promise.all([
     sb.from('anna_expenses').select('*').eq('year', year).eq('month', month).order('id'),
     sb.from('anna_settings').select('salary').eq('year', year).eq('month', month).maybeSingle(),
     sb.from('anna_loans').select('*').eq('year', year).eq('month', month).order('id'),
+    sb.from('anna_planned').select('*').eq('year', year).eq('month', month).order('id'),
   ]);
   if (expRes.error) throw expRes.error;
   return {
     salary:   settRes.data?.salary ?? 0,
     expenses: expRes.data || [],
     loans:    loanRes.data || [],
+    planned:  planRes.data || [],
   };
 }
 
@@ -586,8 +589,9 @@ function renderMonthly() {
   if (loans > 0) catTotals.push({ cat: 'Loans', total: loans });
   catTotals.sort((a, b) => b.total - a.total);
 
-  const hasExpenses = state.expenses.length > 0;
-  const hasLoans    = state.loans.length > 0;
+  const hasExpenses  = state.expenses.length > 0;
+  const hasLoans     = state.loans.length > 0;
+  const plannedTotal = state.planned.reduce((s, p) => s + Number(p.amount), 0);
 
   return `
   <div class="app">
@@ -616,6 +620,11 @@ function renderMonthly() {
         <div class="label">Expenses</div>
         <div class="value">${fmt(grandTotal)}</div>
         <div class="sub">${loans > 0 ? `incl. ${fmt(loans)} loans` : 'this month'}</div>
+      </div>
+      <div class="card planned-card">
+        <div class="label">Planned</div>
+        <div class="value" style="color:var(--orange)">${fmt(plannedTotal)}</div>
+        <div class="sub">${state.planned.length === 0 ? 'no upcoming' : state.planned.length + ' upcoming item' + (state.planned.length > 1 ? 's' : '')}</div>
       </div>
       <div class="card left ${left < 0 ? 'negative' : ''}">
         <div class="label">Remaining</div>
@@ -698,6 +707,44 @@ function renderMonthly() {
           <div style="padding:10px 14px">
             <button class="btn btn-ghost" id="addLoanBtn" style="width:100%">+ Add Loan</button>
           </div>
+        </div>
+
+        <!-- Planned expenses -->
+        <div style="margin-top:8px">
+          <div class="section-header" style="margin-bottom:10px">
+            <h2>Planned Expenses</h2>
+            <button class="btn btn-ghost btn-sm" id="addPlannedBtn">+ Add Planned</button>
+          </div>
+          ${state.planned.length === 0 ? `
+          <div class="empty-state" style="padding:22px 16px">
+            <div class="ei">🗓️</div>
+            <p style="font-size:.82rem">Add future expenses here.<br>Tap ✓ when they happen to move them to actual expenses.</p>
+          </div>` : `
+          <div class="category-block" style="border-style:dashed">
+            <div class="category-title">
+              <span style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block"></span>
+                Upcoming
+              </span>
+              <span class="category-total">${fmt(plannedTotal)}</span>
+            </div>
+            ${state.planned.map(p => {
+              const cm = catMeta(p.category);
+              return `
+            <div class="expense-row">
+              <div class="cat-icon" style="background:${cm.bg};opacity:.75">${cm.svg}</div>
+              <div class="expense-info">
+                <div class="expense-name">${p.name}</div>
+                ${p.note ? `<div class="expense-note">${p.note}</div>` : ''}
+              </div>
+              <div class="expense-amount" style="color:var(--muted)">~${fmt(p.amount)}</div>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-primary btn-sm" data-confirm-planned="${p.id}" title="Mark as done">✓</button>
+                <button class="btn btn-danger" data-delete-planned="${p.id}">✕</button>
+              </div>
+            </div>`;
+            }).join('')}
+          </div>`}
         </div>
       </div>
 
@@ -1015,6 +1062,44 @@ function bindEvents() {
       withSync(() => sb.from('anna_loans').delete().eq('id', id));
     });
   });
+
+  /* planned actions */
+  document.getElementById('addPlannedBtn')?.addEventListener('click', () => openPlannedModal());
+  document.querySelectorAll('[data-confirm-planned]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = parseInt(btn.dataset.confirmPlanned);
+      const p  = state.planned.find(x => x.id === id);
+      if (!p) return;
+      state.planned = state.planned.filter(x => x.id !== id);
+      saveLocal(); render();
+      try {
+        setSyncStatus('syncing');
+        const { data, error } = await sb.from('anna_expenses')
+          .insert({ name: p.name, category: p.category, amount: p.amount, note: p.note, year: p.year, month: p.month })
+          .select().single();
+        if (error) throw error;
+        state.expenses.push(data);
+        await sb.from('anna_planned').delete().eq('id', id);
+        saveLocal(); render();
+        showToast('Moved to expenses ✓');
+        setSyncStatus('synced');
+      } catch(e) {
+        console.error(e); setSyncStatus('error');
+        state.planned.push(p); saveLocal(); render();
+        showToast('Could not save — check connection', '#ef4444');
+      }
+    });
+  });
+  document.querySelectorAll('[data-delete-planned]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = parseInt(btn.dataset.deletePlanned);
+      if (!confirm('Remove planned expense?')) return;
+      state.planned = state.planned.filter(p => p.id !== id);
+      saveLocal(); render();
+      showToast('Removed', '#ef4444');
+      withSync(() => sb.from('anna_planned').delete().eq('id', id));
+    });
+  });
 }
 
 /* ── Data refresh ── */
@@ -1025,6 +1110,7 @@ async function refreshMonth() {
     state.salary   = remote.salary;
     state.expenses = remote.expenses;
     state.loans    = remote.loans;
+    state.planned  = remote.planned;
     saveLocal();
     setSyncStatus('synced');
   } catch(e) {
@@ -1206,6 +1292,58 @@ function openSalaryModal() {
   if (window.innerWidth > 600) overlay.querySelector('#s-amount').select();
 }
 
+function openPlannedModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>New Planned Expense</h3>
+      <div class="form-group"><label>Name</label>
+        <input id="p-name" type="text" placeholder="e.g. Car service" />
+      </div>
+      <div class="form-group"><label>Amount (€)</label>
+        <input id="p-amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" />
+      </div>
+      <div class="form-group"><label>Category</label>
+        <select id="p-cat">${CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Note (optional)</label>
+        <input id="p-note" type="text" placeholder="Details…" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="p-cancel">Cancel</button>
+        <button class="btn btn-primary" id="p-save">Add Planned</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#p-cancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#p-save').addEventListener('click', async () => {
+    const name   = overlay.querySelector('#p-name').value.trim();
+    const amount = parseFloat(overlay.querySelector('#p-amount').value);
+    const cat    = overlay.querySelector('#p-cat').value;
+    const note   = overlay.querySelector('#p-note').value.trim();
+    if (!name || isNaN(amount) || amount < 0) { alert('Please enter a valid name and amount.'); return; }
+    const saveBtn = overlay.querySelector('#p-save');
+    saveBtn.disabled = true; saveBtn.textContent = '…';
+    try {
+      setSyncStatus('syncing');
+      const { data, error } = await sb.from('anna_planned')
+        .insert({ name, category: cat, amount, note, year: state.currentYear, month: state.currentMonth })
+        .select().single();
+      if (error) throw error;
+      state.planned.push(data);
+      saveLocal(); overlay.remove(); render();
+      showToast('Planned expense added');
+      setSyncStatus('synced');
+    } catch(e) {
+      console.error(e); setSyncStatus('error');
+      saveBtn.disabled = false; saveBtn.textContent = 'Add Planned';
+      showToast('Could not save — check connection', '#ef4444');
+    }
+  });
+}
+
 /* ── Boot ── */
 async function init() {
   const cached = loadLocal();
@@ -1218,6 +1356,7 @@ async function init() {
     state.salary   = remote.salary;
     state.expenses = remote.expenses;
     state.loans    = remote.loans;
+    state.planned  = remote.planned;
     saveLocal();
     setSyncStatus('synced');
   } catch(e) {

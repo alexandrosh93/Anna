@@ -1,4 +1,4 @@
--- Anna Expense Tracker — Supabase Setup (v3)
+-- Anna Expense Tracker — Supabase Setup (v4)
 -- Safe: only touches anna_ prefixed tables
 -- Run in: Database → SQL Editor → New query
 
@@ -6,6 +6,7 @@ drop table if exists anna_monthly_overrides cascade;
 drop table if exists anna_expenses          cascade;
 drop table if exists anna_loans             cascade;
 drop table if exists anna_settings          cascade;
+drop table if exists anna_planned           cascade;
 
 -- ── Settings per month ──
 create table anna_settings (
@@ -39,11 +40,26 @@ create table anna_loans (
 );
 create index on anna_loans (year, month);
 
+-- ── Planned / future expenses ──
+create table anna_planned (
+  id         serial  primary key,
+  name       text    not null,
+  category   text    not null default 'Other',
+  amount     numeric not null default 0,
+  note       text             default '',
+  year       int     not null,
+  month      int     not null,
+  created_at timestamptz      default now()
+);
+create index on anna_planned (year, month);
+
 -- ── Row Level Security ──
 alter table anna_settings enable row level security;
 alter table anna_expenses  enable row level security;
 alter table anna_loans     enable row level security;
+alter table anna_planned   enable row level security;
 
 create policy "anon_all" on anna_settings for all to anon using (true) with check (true);
 create policy "anon_all" on anna_expenses  for all to anon using (true) with check (true);
 create policy "anon_all" on anna_loans     for all to anon using (true) with check (true);
+create policy "anon_all" on anna_planned   for all to anon using (true) with check (true);
