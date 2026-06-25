@@ -654,6 +654,9 @@ function renderMonthly() {
         <div class="progress-wrap">
           <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div></div>
         </div>
+        ${plannedTotal > 0 ? `<div class="sub" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          incl. planned: <strong style="color:${left - plannedTotal < 0 ? 'var(--red)' : 'var(--text)'}">${fmt(left - plannedTotal)}</strong>
+        </div>` : ''}
       </div>
     </div>
 
